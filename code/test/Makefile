@@ -23,6 +23,7 @@ yes
 endef
 
 # Machine dependent stuff
+# 解决了依赖问题
 include ../Makefile.dep
 
 real_bin_dir := $(bin_dir)

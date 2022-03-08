@@ -19,6 +19,7 @@ extern "C" {
 #include <iostream>
 #include "copyright.h"
 #include "stack.h"
+
 using namespace std;
 //----------------------------------------------------------------------
 // Stack::Stack
@@ -46,7 +47,7 @@ Stack::Stack(int sz) {
 
 Stack::~Stack() {
 
-    delete [] stack;
+    delete[] stack;
 }
 
 //----------------------------------------------------------------------
@@ -59,7 +60,7 @@ Stack::~Stack() {
 void
 Stack::Push(int value) {
     ASSERT(!Full());
-    
+
     stack[top++] = value;
 }
 
@@ -73,7 +74,7 @@ int
 Stack::Pop() {
 
     ASSERT(!Empty());
-    
+
     return (stack[--top]);
 }
 
@@ -106,16 +107,16 @@ Stack::Empty() {
 void
 Stack::SelfTest() {
     int count = 17;
-    
+
     // Put a bunch of stuff in the stack...
     while (!Full()) {
-	cout << "pushing " << count << "\n";
-	Push(count++);
+        cout << "pushing " << count << "\n";
+        Push(count++);
     }
-    
+
     // ... and take it out again.
     while (!Empty()) {
-	cout << "popping " << Pop() << "\n";
+        cout << "popping " << Pop() << "\n";
     }
 }
 
@@ -130,6 +131,6 @@ main() {
 
     stack->SelfTest();
 
-    delete stack;		   // always delete what you allocate
+    delete stack;           // always delete what you allocate
     return 0;
 }

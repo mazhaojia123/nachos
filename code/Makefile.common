@@ -46,6 +46,8 @@ include ../Makefile.dep
 # vpath tells gnu make where to look for certain files, as determined
 # by the target pattern, if it cannot find them in the current directory.
 
+# zhaojia: 当前目录下找不到就去以下的目录下去找
+# zhaojia: lab2 p51
 vpath %.cc  ../network:../filesys:../vm:../userprog:../threads:../machine
 vpath %.h   ../network:../filesys:../vm:../userprog:../threads:../machine
 vpath %.s   ../network:../filesys:../vm:../userprog:../threads:../machine
@@ -54,6 +56,7 @@ vpath %.s   ../network:../filesys:../vm:../userprog:../threads:../machine
 #CFLAGS = -g -Wall -Wshadow -fwritable-strings $(INCPATH) $(DEFINES) $(HOST) -DCHANGED
 # to comment -fwritable-strings out to make new compiler happy 
 # -ptang, 8/22/05
+# zhaojia: 定义了G++使用的参数
 CFLAGS = -g -Wall -Wshadow $(INCPATH) $(DEFINES) $(HOST) -DCHANGED
 
 # The variables {C,S,CC}FILES should be initialized by the Makefile
@@ -61,6 +64,7 @@ CFLAGS = -g -Wall -Wshadow $(INCPATH) $(DEFINES) $(HOST) -DCHANGED
 # the different versions of nachos corresponding to each assignment; it
 # is not used by the Makefiles for the bin or test directories.
  
+# zhaojia: 文件名及其存放路径
 s_ofiles = $(SFILES:%.s=$(obj_dir)/%.o)
 c_ofiles = $(CFILES:%.c=$(obj_dir)/%.o)
 cc_ofiles = $(CCFILES:%.cc=$(obj_dir)/%.o)
@@ -82,7 +86,7 @@ $(program): $(ofiles)
 # Executables: We know a file is an executable by the file prefix
 # $(bin_dir).  This rule specifies how to build the executable, but it 
 # does not specify the dependencies.  The dependencies are specified
-# elsewhere.  When gmake has multiple rules for a given target, it
+# elsewhere. When gmake has multiple rules for a given target, it
 # combines the dependencies as if they all came from one rule; thus,
 # the $^ macro in the command below refers to dependencies of this target
 # as specified by the other rules.  Also note that only one of the rules

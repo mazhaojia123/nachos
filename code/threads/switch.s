@@ -313,9 +313,9 @@ _ThreadRoot:
 
         .globl  _SWITCH
 _SWITCH:
-        movl    %eax,_eax_save          # save the value of eax
-        movl    4(%esp),%eax            # move pointer to t1 into eax
-        movl    %ebx,_EBX(%eax)         # save registers
+        movl    %eax,_eax_save          # save the value of eax, 保存eax
+        movl    4(%esp),%eax            # move pointer to t1 into eax, 保存旧的 stack pointer
+        movl    %ebx,_EBX(%eax)         # save registers, 保存到内存里
         movl    %ecx,_ECX(%eax)
         movl    %edx,_EDX(%eax)
         movl    %esi,_ESI(%eax)

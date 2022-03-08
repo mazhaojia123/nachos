@@ -1,4 +1,4 @@
-# This is part of a GNU-Makefile, to specify system-dependent 
+# This is part of a GNU-Makefile, to specify ** system-dependent **
 # parts of the Makefile enviroment.
 
 # This gets included as part of the GNU-Makefile used in each of 
@@ -21,7 +21,11 @@ CC = g++ -m32
 LD = g++ -m32
 AS = as --32
 
+# zhaojia: 获得所在的平台, 并输出在终端
 uname = $(shell uname)
+$(warning "--------------")
+$(warning $(uname))
+$(warning "--------------")
 
 mips_arch = dec-mips-ultrix
 

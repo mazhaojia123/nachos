@@ -20,8 +20,8 @@ extern "C" {
 #include "copyright.h"
 #include "list.h"
 
-const int NULL = 0;
-
+//const int NULL = 0;
+#define NULL 0
 
 // The following class defines a "list element" -- which is
 // used to keep track of one item on a list.  It is equivalent to a
@@ -32,13 +32,16 @@ const int NULL = 0;
 // and accessing ListElements.
 
 class ListElement {
-   public:
-     ListElement(int value) { item = value; next = NULL;};
-     					// constructor for list element
+public:
+    ListElement(int value) {
+        item = value;
+        next = NULL;
+    };
+    // constructor for list element
 
-     ListElement *next;		// next element on list, 
-				// NULL if this is the last
-     int item; 	    	        // value of this element
+    ListElement *next;        // next element on list,
+    // NULL if this is the last
+    int item;                    // value of this element
 };
 
 
@@ -49,9 +52,9 @@ class ListElement {
 //	Elements can now be added to the list.
 //----------------------------------------------------------------------
 
-List::List() { 
+List::List() {
 
-    first = last = NULL; 
+    first = last = NULL;
 }
 
 
@@ -61,10 +64,10 @@ List::List() {
 //	ListElements, de-allocate them.
 //----------------------------------------------------------------------
 
-List::~List() { 
-   
+List::~List() {
+
     while (!Empty())
-	(void) Remove();	 // delete all the list elements
+        (void) Remove();     // delete all the list elements
 }
 
 
@@ -83,12 +86,12 @@ void
 List::Prepend(int value) {
     ListElement *element = new ListElement(value);
 
-    if (Empty()) {		// list is empty
-	first = element;
-	last = element;
-    } else {			// else put it before first
-	element->next = first;
-	first = element;
+    if (Empty()) {        // list is empty
+        first = element;
+        last = element;
+    } else {            // else put it before first
+        element->next = first;
+        first = element;
     }
 }
 
@@ -111,14 +114,14 @@ List::Remove() {
     element = first;
     value = first->item;
 
-    if (first == last) {	// list had one item, now has none 
+    if (first == last) {    // list had one item, now has none
         first = NULL;
-	last = NULL;
+        last = NULL;
     } else {
         first = element->next;
     }
 
-    delete element;		// deallocate list element -- no longer needed
+    delete element;        // deallocate list element -- no longer needed
     return value;
 }
 
@@ -128,6 +131,6 @@ List::Remove() {
 //----------------------------------------------------------------------
 
 bool
-List::Empty() { 
+List::Empty() {
     return (first == NULL);
 }
