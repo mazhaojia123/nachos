@@ -102,6 +102,7 @@ Initialize(int argc, char **argv) {
                 argCount = 2;
             }
         } else if (!strcmp(*argv, "-rs")) {
+            // LAB3: 在这里第一处理”rs"参数
             ASSERT(argc > 1);
             RandomInit(atoi(*(argv + 1)));    // initialize pseudo-random
             // number generator
@@ -137,6 +138,7 @@ Initialize(int argc, char **argv) {
     stats = new Statistics();            // collect statistics
     interrupt = new Interrupt;            // 1. start up interrupt handling
     scheduler = new Scheduler();          // 2. initialize the ready queue
+    // LAB3: 注册一个handler，一个随机域
     if (randomYield)                // start the timer (if needed)
         timer = new Timer(TimerInterruptHandler, 0, randomYield);
 

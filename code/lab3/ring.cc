@@ -44,6 +44,9 @@ Ring::Ring(int sz) {
     in = 0;
     out = 0;
     buffer = new slot[size]; //allocate an array of slots.
+
+    for (int i = 0; i < size; i++)
+        buffer[i].thread_id = -1;
 }
 
 //----------------------------------------------------------------------
@@ -60,6 +63,21 @@ Ring::~Ring() {
     delete[] buffer;
 }
 
+void Ring::OutputRing() {
+    for (int i = 0; i < size; i++) {
+        printf("(%d,%d)\t", buffer[i].thread_id, buffer[i].value);
+    }
+    printf("\n");
+    for (int i = 0; i < in; i++)
+        printf("       \t");
+    printf("in\n");
+    for (int i = 0; i < out; i++)
+        printf("       \t");
+    printf("out\n");
+    printf("in : %d, out : %d", in, out);
+    printf("\n\n");
+}
+
 //----------------------------------------------------------------------
 // Ring::Put
 // 	Put a message into the next available empty slot. We assume the
@@ -70,6 +88,7 @@ Ring::~Ring() {
 
 void
 Ring::Put(slot *message) {
+    // TODO: 没有进行是否为满的check
     buffer[in].thread_id = message->thread_id;
     buffer[in].value = message->value;
     in = (in + 1) % size;
@@ -85,19 +104,31 @@ Ring::Put(slot *message) {
 
 void
 Ring::Get(slot *message) {
+    // TODO: 没有进行是否为空的check
     message->thread_id = buffer[out].thread_id;
     message->value = buffer[out].value;
+    buffer[out].thread_id = -1;
     out = (out + 1) % size;
 }
 
+// lab3:
+//  Empty 返回 1 ,如果缓冲区已经为空；返回 0 ,如果不空
 int
 Ring::Empty() {
-// TODO: to be implemented
+    if (in == out)
+        return 1;
+    else
+        return 0;
 }
 
+// lab3:
+//  Full 返回 1 ,如果缓冲区已经为空；返回 0 ,如果不空
 int
 Ring::Full() {
-// TODO: to be implemented
+    if ((in + 1) % size == out)
+        return 1;
+    else
+        return 0;
 }
 
 

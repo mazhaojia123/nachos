@@ -41,6 +41,7 @@ public:
     int Full();       // Returns non-0 if the ring is full, 0 otherwise.
     int Empty();      // Returns non-0 if the ring is empty, 0 otherwise.
 
+    void OutputRing();
 private:
     int size;         // The size of the ring buffer.
     int in, out;      // Index of 

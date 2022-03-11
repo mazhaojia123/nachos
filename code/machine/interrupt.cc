@@ -116,6 +116,7 @@ Interrupt::SetLevel(IntStatus now) {
     // interrupts
 
     ChangeLevel(old, now);            // change to new state
+    // lab3: 当我们从关中断到开中断的时候，会 OneTick
     if ((now == IntOn) && (old == IntOff))
         OneTick();                // advance simulated time
     return old;
@@ -129,6 +130,7 @@ Interrupt::SetLevel(IntStatus now) {
 //----------------------------------------------------------------------
 void
 Interrupt::Enable() {
+    // lab3: 我们第一次进行 SetLevel
     (void) SetLevel(IntOn);
 }
 
@@ -156,6 +158,8 @@ Interrupt::OneTick() {
     DEBUG('i', "\n== Tick %d ==\n", stats->totalTicks);
 
 // check any pending interrupts are now ready to fire
+    // lab3: 单纯的设置中断。此处没有 进行 tick
+    //  并且，这里是完全的关中断！又关了中断？？？
     ChangeLevel(IntOn, IntOff);        // first, turn off interrupts
     // (interrupt handlers run with
     // interrupts disabled)
@@ -242,7 +246,7 @@ Interrupt::Halt() {
 //
 //	Implementation: just put it on a sorted list.
 //
-//	NOTE: the Nachos kernel should not call this routine directly.
+//	NOTE: the Nachos kernel ** should not call this routine directly. **
 //	Instead, it is only called by the hardware device simulators.
 //
 //	"handler" is the procedure to call when the interrupt occurs
@@ -251,6 +255,9 @@ Interrupt::Halt() {
 //		 interrupt is to occur
 //	"type" is the hardware device that generated the interrupt
 //----------------------------------------------------------------------
+// lab3:
+//  1. nachos 不会直接调用这个函数，而是由硬件模拟器调用
+//  2. 总之它注册了一次中断。这个中断是什么类型、什么时候触发、谁来处理都给了说明；
 void
 Interrupt::Schedule(VoidFunctionPtr handler, _int arg, int fromNow, IntType type) {
     int when = stats->totalTicks + fromNow;
@@ -276,6 +283,10 @@ Interrupt::Schedule(VoidFunctionPtr handler, _int arg, int fromNow, IntType type
 //		interrupt is just the time-slice daemon, however, then 
 //		we're done!
 //----------------------------------------------------------------------
+// lab3:
+//  CheckIfDue 只有在OneTick和Idle里调用
+//  Idle 只有在就绪队列为空才会使用
+//  OneTick 只有在 setLevel 和 mipssim 中用到
 bool
 Interrupt::CheckIfDue(bool advanceClock) {
     MachineStatus old = status;
@@ -291,6 +302,18 @@ Interrupt::CheckIfDue(bool advanceClock) {
     if (toOccur == NULL)        // no pending interrupts
         return FALSE;
 
+
+    // lab-3-bad:
+    //  接下来的 if else 分别做了以下几个讨论
+    //  1. 要不要提前时钟到第一个中断的时间？要，就提前；不要就没到点直接返回了
+    //  2. 在 Idle 时，遇到 ＴimerInt，没有其它中断时？没到点放回去，返回 false；
+    //  3. 接下来就是进行中断处理了：以下几种情况可能陷入中断处理
+    //      1. 我们在内核/用户态，
+    //
+    // lab3:
+    //  1. 首先检查到没到点。没到点或不能提前就返回了。
+    //  2. 到点的去检查是不是(idleMode, TimerInt, 无其他中断)。如果是直接返回。
+    //  3. 调用中断处理函数
     if (advanceClock && when > stats->totalTicks) {    // advance the clock
         stats->idleTicks += (when - stats->totalTicks);
         stats->totalTicks = when;
@@ -316,6 +339,7 @@ Interrupt::CheckIfDue(bool advanceClock) {
     status = SystemMode;            // whatever we were doing,
     // we are now going to be
     // running in the kernel
+    // lab3: 调用了 TimerExpired 进而调用 handler
     (*(toOccur->handler))(toOccur->arg);    // call the interrupt handler
     status = old;                // restore the machine status
     inHandler = FALSE;

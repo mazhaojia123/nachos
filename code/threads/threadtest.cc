@@ -25,9 +25,16 @@ void
 SimpleThread(_int which) {
     int num;
 
-    for (num = 0; num < 2; num++) {
+    for (num = 0; num < 10; num++) {
         printf("*** thread %d looped %d times\n", (int) which, num);
-        currentThread->Yield();
+        // lab3:
+        //  SetLevel 能随便用吗，要是能随便用，那咱们就？
+        interrupt->OneTick();
+        interrupt->OneTick();
+        interrupt->OneTick();
+        interrupt->OneTick();
+        interrupt->OneTick();
+//        currentThread->Yield();
     }
 }
 
@@ -42,8 +49,13 @@ ThreadTest() {
     DEBUG('t', "Entering SimpleTest");
 
     Thread *t = new Thread("forked thread");
-
     t->Fork(SimpleThread, 1);
+
+    Thread *t1 = new Thread("forked thread");
+    t1->Fork(SimpleThread, 2);
+
+    Thread *t2 = new Thread("forked thread");
+    t2->Fork(SimpleThread, 3);
     SimpleThread(0);
 }
 

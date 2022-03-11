@@ -1,2 +1,10 @@
 *.idea/ 
 code/lab2/arch/
+code/lab3/arch/
+code/lab5/arch/
+code/threads/arch/
+code/lab3/bufferInfo.txt
+/code/lab3/tmp_0
+/code/lab3/tmp_1
+/code/lab3/tmp_2
+/code/lab3/tmp_3

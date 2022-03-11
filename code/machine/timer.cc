@@ -48,6 +48,7 @@ Timer::Timer(VoidFunctionPtr timerHandler, _int callArg, bool doRandom)
     arg = callArg; 
 
     // schedule the first interrupt from the timer device
+    // lab3: 也就是说，这是开始时间片调度的开端
     interrupt->Schedule(TimerHandler, (_int) this, TimeOfNextInterrupt(), 
 		TimerInt); 
 }
