@@ -26,7 +26,7 @@ SimpleThread(_int which) {
     int num;
 
     for (num = 0; num < 10; num++) {
-        printf("*** thread %d looped %d times\n", (int) which, num);
+//        printf("*** thread %d looped %d times\n", (int) which, num);
         // lab3:
         //  SetLevel 能随便用吗，要是能随便用，那咱们就？
         interrupt->OneTick();
