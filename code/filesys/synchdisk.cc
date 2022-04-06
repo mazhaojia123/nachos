@@ -72,6 +72,8 @@ SynchDisk::~SynchDisk()
 void
 SynchDisk::ReadSector(int sectorNumber, char* data)
 {
+    // lab5: 去 Ｄisk 找到 sectorNumber 对应的扇区
+    //  然后把其中的内容放到 data 这个 char 数组中
     lock->Acquire();			// only one disk I/O at a time
     disk->ReadRequest(sectorNumber, data);
     semaphore->P();			// wait for interrupt
@@ -90,6 +92,7 @@ SynchDisk::ReadSector(int sectorNumber, char* data)
 void
 SynchDisk::WriteSector(int sectorNumber, char* data)
 {
+    // lab5: 把 char 数组 data 的内容放到 sectorNumber 所对应的扇区
     lock->Acquire();			// only one disk I/O at a time
     disk->WriteRequest(sectorNumber, data);
     semaphore->P();			// wait for interrupt

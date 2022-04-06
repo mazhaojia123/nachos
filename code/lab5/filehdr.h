@@ -17,8 +17,8 @@
 #include "disk.h"
 #include "bitmap.h"
 
-#define NumDirect 	((SectorSize - 2 * sizeof(int)) / sizeof(int))
-#define MaxFileSize 	(NumDirect * SectorSize)
+#define NumDirect    ((SectorSize - 2 * sizeof(int)) / sizeof(int))
+#define MaxFileSize    (NumDirect * SectorSize)
 
 // The following class defines the Nachos "file header" (in UNIX terms,  
 // the "i-node"), describing where on disk to find all of the data in the file.
@@ -36,31 +36,48 @@
 // reading it from disk.
 
 class FileHeader {
-  public:
+public:
+    FileHeader() {
+        numBytes = 0;
+        numSectors = 0;
+        for (int i = 0; i < NumDirect; i++)
+            dataSectors[i] = 0;
+        // lab5:
+        //  一共128个字节，一个扇区
+        //  8个字节给了 前两项
+        //  120个字节给了后面的列表，共30项
+    }
+
+    bool Allocate(BitMap *bitMap, int fileSize, int incrementBytes);
+
     bool Allocate(BitMap *bitMap, int fileSize);// Initialize a file header, 
-						//  including allocating space 
-						//  on disk for the file data
-    void Deallocate(BitMap *bitMap);  		// De-allocate this file's 
-						//  data blocks
+    //  including allocating space
+    //  on disk for the file data
+    void Deallocate(BitMap *bitMap);        // De-allocate this file's
+    //  data blocks
 
-    void FetchFrom(int sectorNumber); 	// Initialize file header from disk
-    void WriteBack(int sectorNumber); 	// Write modifications to file header
-					//  back to disk
+    void FetchFrom(int sectorNumber);    // Initialize file header from disk
+    void WriteBack(int sectorNumber);    // Write modifications to file header
+    //  back to disk
 
-    int ByteToSector(int offset);	// Convert a byte offset into the file
-					// to the disk sector containing
-					// the byte
 
-    int FileLength();			// Return the length of the file 
-					// in bytes
+    // lab5: 给了在文件中的偏移量，我们根据这个偏移量，计算是第几个逻辑块，然后得到这个逻辑块的 sector 号
+    int ByteToSector(int offset);    // Convert a byte offset into the file
+    // to the disk sector containing
+    // the byte
 
-    void Print();			// Print the contents of the file.
+    int FileLength();            // Return the length of the file
+    // in bytes
 
-  private:
-    int numBytes;			// Number of bytes in the file
-    int numSectors;			// Number of data sectors in the file
-    int dataSectors[NumDirect];		// Disk sector numbers for each data 
-					// block in the file
+    void Print();            // Print the contents of the file.
+
+private:
+    // lab5: 维护了<, , >
+    //  直接操控 ＳynchDisk 提供的接口
+    int numBytes;            // Number of bytes in the file
+    int numSectors;            // Number of data sectors in the file
+    int dataSectors[NumDirect];        // Disk sector numbers for each data
+    // block in the file
 };
 
 #endif // FILEHDR_H

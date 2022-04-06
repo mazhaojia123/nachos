@@ -37,59 +37,71 @@
 
 #include "copyright.h"
 #include "openfile.h"
+#include "bitmap.h"
 
-#ifdef FILESYS_STUB 		// Temporarily implement file system calls as 
-				// calls to UNIX, until the real file system
-				// implementation is available
+#ifdef FILESYS_STUB        // Temporarily implement file system calls as
+// calls to UNIX, until the real file system
+// implementation is available
 class FileSystem {
-  public:
-    FileSystem(bool format) {}
+public:
+FileSystem(bool format) {}
 
-    bool Create(char *name, int initialSize) { 
-	int fileDescriptor = OpenForWrite(name);
+bool Create(char *name, int initialSize) {
+int fileDescriptor = OpenForWrite(name);
 
-	if (fileDescriptor == -1) return FALSE;
-	Close(fileDescriptor); 
-	return TRUE; 
-	}
+if (fileDescriptor == -1) return FALSE;
+Close(fileDescriptor);
+return TRUE;
+}
 
-    OpenFile* Open(char *name) {
-	  int fileDescriptor = OpenForReadWrite(name, FALSE);
+OpenFile* Open(char *name) {
+int fileDescriptor = OpenForReadWrite(name, FALSE);
 
-	  if (fileDescriptor == -1) return NULL;
-	  return new OpenFile(fileDescriptor);
-      }
+if (fileDescriptor == -1) return NULL;
+return new OpenFile(fileDescriptor);
+}
 
-    bool Remove(char *name) { return (bool)(Unlink(name) == 0); }
+bool Remove(char *name) { return (bool)(Unlink(name) == 0); }
 
 };
 
 #else // FILESYS
+
 class FileSystem {
-  public:
-    FileSystem(bool format);		// Initialize the file system.
-					// Must be called *after* "synchDisk" 
-					// has been initialized.
-    					// If "format", there is nothing on
-					// the disk, so initialize the directory
-    					// and the bitmap of free blocks.
+public:
+    FileSystem(bool format);        // Initialize the file system.
+    // Must be called *after* "synchDisk"
+    // has been initialized.
+    // If "format", there is nothing on
+    // the disk, so initialize the directory
+    // and the bitmap of free blocks.
 
-    bool Create(char *name, int initialSize);  	
-					// Create a file (UNIX creat)
+    bool Create(char *name, int initialSize);
+    // Create a file (UNIX creat)
 
-    OpenFile* Open(char *name); 	// Open a file (UNIX open)
+    OpenFile *Open(char *name);    // Open a file (UNIX open)
 
-    bool Remove(char *name);  		// Delete a file (UNIX unlink)
+    bool Remove(char *name);        // Delete a file (UNIX unlink)
 
-    void List();			// List all the files in the file system
+    void List();            // List all the files in the file system
 
-    void Print();			// List all the files and their contents
+    void Print();            // List all the files and their contents
 
-  private:
-   OpenFile* freeMapFile;		// Bit map of free disk blocks,
-					// represented as a file
-   OpenFile* directoryFile;		// "Root" directory -- list of 
-					// file names, represented as a file
+    BitMap* getBitMap();
+
+    void setBitMap(BitMap* freeMap);
+
+private:
+    // lab5: 所谓的文件系统就是维护两个结构？—— ”目录表文件“ ”位视图文件“
+    //  FileSystem 使用 OpenFile 提供的接口；
+    //  进而能够读写磁盘上的某个 Sector, 通过文件名 -- 目录表 -- 头文件 -- 文件块 进行查找
+    //  FileSystem -- OpenFile -- SynchDisk -- Disk
+    // lab5:
+    //  FileSystem 打开两个文件, 内容还是在磁盘中，而不是内存里
+    OpenFile *freeMapFile;        // Bit map of free disk blocks,
+    // represented as a file
+    OpenFile *directoryFile;        // "Root" directory -- list of
+    // file names, represented as a file
 };
 
 #endif // FILESYS

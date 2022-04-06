@@ -24,8 +24,7 @@
 //	"sector" -- the location on disk of the file header for this file
 //----------------------------------------------------------------------
 
-OpenFile::OpenFile(int sector)
-{ 
+OpenFile::OpenFile(int sector) {
     hdr = new FileHeader;
     hdr->FetchFrom(sector);
     seekPosition = 0;
@@ -36,8 +35,7 @@ OpenFile::OpenFile(int sector)
 // 	Close a Nachos file, de-allocating any in-memory data structures.
 //----------------------------------------------------------------------
 
-OpenFile::~OpenFile()
-{
+OpenFile::~OpenFile() {
     delete hdr;
 }
 
@@ -50,10 +48,9 @@ OpenFile::~OpenFile()
 //----------------------------------------------------------------------
 
 void
-OpenFile::Seek(int position)
-{
+OpenFile::Seek(int position) {
     seekPosition = position;
-}	
+}
 
 //----------------------------------------------------------------------
 // OpenFile::Read/Write
@@ -69,19 +66,20 @@ OpenFile::Seek(int position)
 //----------------------------------------------------------------------
 
 int
-OpenFile::Read(char *into, int numBytes)
-{
-   int result = ReadAt(into, numBytes, seekPosition);
-   seekPosition += result;
-   return result;
+OpenFile::Read(char *into, int numBytes) {
+    int result = ReadAt(into, numBytes, seekPosition);
+    seekPosition += result;
+    return result;
 }
 
 int
-OpenFile::Write(char *into, int numBytes)
-{
-   int result = WriteAt(into, numBytes, seekPosition);
-   seekPosition += result;
-   return result;
+OpenFile::Write(char *into, int numBytes) {
+    // lab5:
+    //  1. 在当前的 seekPosition 处做修改
+    //  2. 写完之后还会移动 seekPosition
+    int result = WriteAt(into, numBytes, seekPosition);
+    seekPosition += result;
+    return result;
 }
 
 //----------------------------------------------------------------------
@@ -111,18 +109,17 @@ OpenFile::Write(char *into, int numBytes)
 //----------------------------------------------------------------------
 
 int
-OpenFile::ReadAt(char *into, int numBytes, int position)
-{
+OpenFile::ReadAt(char *into, int numBytes, int position) {
     int fileLength = hdr->FileLength();
     int i, firstSector, lastSector, numSectors;
     char *buf;
 
     if ((numBytes <= 0) || (position >= fileLength))
-    	return 0; 				// check request
-    if ((position + numBytes) > fileLength)		
-	numBytes = fileLength - position;
-    DEBUG('f', "Reading %d bytes at %d, from file of length %d.\n", 	
-			numBytes, position, fileLength);
+        return 0;                // check request
+    if ((position + numBytes) > fileLength)
+        numBytes = fileLength - position;
+    DEBUG('f', "Reading %d bytes at %d, from file of length %d.\n",
+          numBytes, position, fileLength);
 
     firstSector = divRoundDown(position, SectorSize);
     lastSector = divRoundDown(position + numBytes - 1, SectorSize);
@@ -130,30 +127,50 @@ OpenFile::ReadAt(char *into, int numBytes, int position)
 
     // read in all the full and partial sectors that we need
     buf = new char[numSectors * SectorSize];
-    for (i = firstSector; i <= lastSector; i++)	
-        synchDisk->ReadSector(hdr->ByteToSector(i * SectorSize), 
-					&buf[(i - firstSector) * SectorSize]);
+    for (i = firstSector; i <= lastSector; i++)
+        synchDisk->ReadSector(hdr->ByteToSector(i * SectorSize),
+                              &buf[(i - firstSector) * SectorSize]);
 
     // copy the part we want
     bcopy(&buf[position - (firstSector * SectorSize)], into, numBytes);
-    delete [] buf;
+    delete[] buf;
     return numBytes;
 }
 
 int
-OpenFile::WriteAt(char *from, int numBytes, int position)
-{
+OpenFile::WriteAt(char *from, int numBytes, int position) {
     int fileLength = hdr->FileLength();
     int i, firstSector, lastSector, numSectors;
     bool firstAligned, lastAligned;
     char *buf;
 
-    if ((numBytes <= 0) || (position >= fileLength))
-	return 0;				// check request
-    if ((position + numBytes) > fileLength)
-	numBytes = fileLength - position;
-    DEBUG('f', "Writing %d bytes at %d, from file of length %d.\n", 	
-			numBytes, position, fileLength);
+//    if ((numBytes <= 0) || (position >= fileLength))
+//        return 0;                // check request
+    // lab5: 允许 position == fileLength ，也就是追加
+    if ((numBytes <= 0) || (position > fileLength))
+        return -1;                // check request
+
+    // lab5: 这里的代码不允许写超过文件大小的内容。
+//    if ((position + numBytes) > fileLength)
+//        numBytes = fileLength - position;
+
+    // lab5: 这里重新：
+    //  1. 更新了 位视图
+    //  2. 更新了头文件
+    //  3. 进而增加了需要的块
+    //  因为后续的写入都是根据头文件所指定的块来实现，所以这里就是需要修改的全部内容
+    if ((position + numBytes) > fileLength) {
+        int incrementBytes = (position + numBytes) - fileLength;
+        BitMap *freeBitMap = fileSystem->getBitMap(); // TODO: 实现
+        bool hdrRet;
+        hdrRet = hdr->Allocate(freeBitMap, fileLength, incrementBytes); // TODO: 实现
+        if (!hdrRet)
+            return -1;
+        fileSystem->setBitMap(freeBitMap); // TODO: 实现
+    }
+
+    DEBUG('f', "Writing %d bytes at %d, from file of length %d.\n",
+          numBytes, position, fileLength);
 
     firstSector = divRoundDown(position, SectorSize);
     lastSector = divRoundDown(position + numBytes - 1, SectorSize);
@@ -161,24 +178,31 @@ OpenFile::WriteAt(char *from, int numBytes, int position)
 
     buf = new char[numSectors * SectorSize];
 
-    firstAligned = (bool)(position == (firstSector * SectorSize));
-    lastAligned = (bool)((position + numBytes) == ((lastSector + 1) * SectorSize));
+    // lab5: 检查开始写的位置是不是这个块的起始位置
+    //       检查最终结束的位置是不是最终块的end位置（下一个块的起始）
+    firstAligned = (bool) (position == (firstSector * SectorSize));
+    lastAligned = (bool) ((position + numBytes) == ((lastSector + 1) * SectorSize));
 
 // read in first and last sector, if they are to be partially modified
+    // lab5: 首先把他们的开头结尾都读出来
     if (!firstAligned)
-        ReadAt(buf, SectorSize, firstSector * SectorSize);	
+        ReadAt(buf, SectorSize, firstSector * SectorSize);
     if (!lastAligned && ((firstSector != lastSector) || firstAligned))
-        ReadAt(&buf[(lastSector - firstSector) * SectorSize], 
-				SectorSize, lastSector * SectorSize);	
+        ReadAt(&buf[(lastSector - firstSector) * SectorSize],
+               SectorSize, lastSector * SectorSize);
 
-// copy in the bytes we want to change 
+// copy in the bytes we want to change
+    // lab5: 实际上是做了这样的操作
+    //  [ 起始块 ] [] [] ... [] [ 终止块 ] (逻辑文件示意图)
+    //     |------- bcopy修改的 ----|
+    //  开头结尾各有部分不变
     bcopy(from, &buf[position - (firstSector * SectorSize)], numBytes);
 
 // write modified sectors back    
-    for (i = firstSector; i <= lastSector; i++)	
-        synchDisk->WriteSector(hdr->ByteToSector(i * SectorSize), 
-					&buf[(i - firstSector) * SectorSize]);
-    delete [] buf;
+    for (i = firstSector; i <= lastSector; i++)
+        synchDisk->WriteSector(hdr->ByteToSector(i * SectorSize),
+                               &buf[(i - firstSector) * SectorSize]);
+    delete[] buf;
     return numBytes;
 }
 
@@ -188,7 +212,6 @@ OpenFile::WriteAt(char *from, int numBytes, int position)
 //----------------------------------------------------------------------
 
 int
-OpenFile::Length() 
-{ 
-    return hdr->FileLength(); 
+OpenFile::Length() {
+    return hdr->FileLength();
 }

@@ -25,29 +25,32 @@
 // making a request, it waits around until the operation finishes before
 // returning.
 class SynchDisk {
-  public:
-    SynchDisk(char* name);    		// Initialize a synchronous disk,
-					// by initializing the raw Disk.
-    ~SynchDisk();			// De-allocate the synch disk data
-    
-    void ReadSector(int sectorNumber, char* data);
-    					// Read/write a disk sector, returning
-    					// only once the data is actually read 
-					// or written.  These call
-    					// Disk::ReadRequest/WriteRequest and
-					// then wait until the request is done.
-    void WriteSector(int sectorNumber, char* data);
-    
-    void RequestDone();			// Called by the disk device interrupt
-					// handler, to signal that the
-					// current disk operation is complete.
+public:
+    SynchDisk(char *name);            // Initialize a synchronous disk,
+    // by initializing the raw Disk.
+    ~SynchDisk();            // De-allocate the synch disk data
 
-  private:
-    Disk *disk;		  		// Raw disk device
-    Semaphore *semaphore; 		// To synchronize requesting thread 
-					// with the interrupt handler
-    Lock *lock;		  		// Only one read/write request
-					// can be sent to the disk at a time
+    void ReadSector(int sectorNumber, char *data);
+
+    // Read/write a disk sector, returning
+    // only once the data is actually read
+    // or written.  These call
+    // Disk::ReadRequest/WriteRequest and
+    // then wait until the request is done.
+    void WriteSector(int sectorNumber, char *data);
+
+    void RequestDone();            // Called by the disk device interrupt
+    // handler, to signal that the
+    // current disk operation is complete.
+
+private:
+    // lab5: SynchDisk 提供了读写某个 sector 的接口
+    //  OpenFile 操作 SynchDisk; SynchDisk 操作 Disk
+    Disk *disk;                // Raw disk device
+    Semaphore *semaphore;        // To synchronize requesting thread
+    // with the interrupt handler
+    Lock *lock;                // Only one read/write request
+    // can be sent to the disk at a time
 };
 
 #endif // SYNCHDISK_H

@@ -24,6 +24,8 @@
 #include "utility.h"
 #include "filehdr.h"
 #include "directory.h"
+#include "../lab5/directory.h"
+
 
 //----------------------------------------------------------------------
 // Directory::Directory
@@ -194,4 +196,8 @@ Directory::Print()
 	}
     printf("\n");
     delete hdr;
+}
+
+int MultiLevelDir::Directory(int size) {
+    return 0;
 }

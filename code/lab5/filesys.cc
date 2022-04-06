@@ -135,6 +135,9 @@ FileSystem::FileSystem(bool format)
 	delete dirHdr;
 	}
     } else {
+        // lab5:
+        //  1. 不需要 format 文件
+        //  2. 只需要调用 OpenFile 打开位视图和目录表的头文件所在的扇区
     // if we are not formatting the disk, just open the files representing
     // the bitmap and directory; these are left open while Nachos is running
         freeMapFile = new OpenFile(FreeMapSector);
@@ -182,9 +185,15 @@ FileSystem::Create(char *name, int initialSize)
 
     DEBUG('f', "Creating file %s, size %d\n", name, initialSize);
 
+    // lab5: 首先创建 Directory，将磁盘上的 **目录表** 同步到内存中。
+    //  使用 FetchFrom 方法
     directory = new Directory(NumDirEntries);
     directory->FetchFrom(directoryFile);
 
+    // lab5:
+    //  1. FetchFrom 负责将 目录表，位视图 同步到内存中
+    //  2. 在内存中对其进行操作
+    //  3. ＷriteBack 负责将内存中的某个块同步到 ＳynchDisk
     if (directory->Find(name) != -1)
       success = FALSE;			// file is already in directory
     else {	
@@ -338,4 +347,17 @@ FileSystem::Print()
     delete dirHdr;
     delete freeMap;
     delete directory;
-} 
+}
+
+BitMap* FileSystem::getBitMap() {
+    // lab5: 把位视图同步到内存中，然后返回位视图
+    BitMap *freeBitMap = new BitMap(NumSectors);
+    freeBitMap->FetchFrom(freeMapFile);
+    return freeBitMap;
+}
+
+void FileSystem::setBitMap(BitMap* freeMap) {
+    // lab5: 把位视图同步到磁盘中
+    BitMap *freeBitMap = new BitMap(NumSectors);
+    freeMap->WriteBack(freeMapFile);
+}
