@@ -21,27 +21,30 @@
 //----------------------------------------------------------------------
 
 void
-StartProcess(char *filename)
-{
+StartProcess(char *filename) {
     OpenFile *executable = fileSystem->Open(filename);
     AddrSpace *space;
 
     if (executable == NULL) {
-	printf("Unable to open file %s\n", filename);
-	return;
+        printf("Unable to open file %s\n", filename);
+        return;
     }
-    space = new AddrSpace(executable);    
+    // lab6: 使用这个可执行文件创建一个新的地址空间，
+    //  立刻删掉这个可执行文件了
+    space = new AddrSpace(executable);
     currentThread->space = space;
 
-    delete executable;			// close file
+    delete executable;            // close file
 
-    space->InitRegisters();		// set the initial register values
-    space->RestoreState();		// load page table register
+    // lab6：设置 machine 的寄存器
+    //  设置 machine 的页表
+    space->InitRegisters();        // set the initial register values
+    space->RestoreState();        // load page table register
 
-    machine->Run();			// jump to the user progam
-    ASSERT(FALSE);			// machine->Run never returns;
-					// the address space exits
-					// by doing the syscall "exit"
+    machine->Run();            // jump to the user progam
+    ASSERT(FALSE);            // machine->Run never returns;
+    // the address space exits
+    // by doing the syscall "exit"
 }
 
 // Data structures needed for the console test.  Threads making
@@ -57,6 +60,7 @@ static Semaphore *writeDone;
 //----------------------------------------------------------------------
 
 static void ReadAvail(_int arg) { readAvail->V(); }
+
 static void WriteDone(_int arg) { writeDone->V(); }
 
 //----------------------------------------------------------------------
@@ -65,20 +69,19 @@ static void WriteDone(_int arg) { writeDone->V(); }
 //	the output.  Stop when the user types a 'q'.
 //----------------------------------------------------------------------
 
-void 
-ConsoleTest (char *in, char *out)
-{
+void
+ConsoleTest(char *in, char *out) {
     char ch;
 
     console = new Console(in, out, ReadAvail, WriteDone, 0);
     readAvail = new Semaphore("read avail", 0);
     writeDone = new Semaphore("write done", 0);
-    
+
     for (;;) {
-	readAvail->P();		// wait for character to arrive
-	ch = console->GetChar();
-	console->PutChar(ch);	// echo it!
-	writeDone->P() ;        // wait for write to finish
-	if (ch == 'q') return;  // if q, quit
+        readAvail->P();        // wait for character to arrive
+        ch = console->GetChar();
+        console->PutChar(ch);    // echo it!
+        writeDone->P();        // wait for write to finish
+        if (ch == 'q') return;  // if q, quit
     }
 }

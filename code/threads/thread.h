@@ -41,8 +41,10 @@
 #include "utility.h"
 
 #ifdef USER_PROGRAM
+
 #include "machine.h"
 #include "addrspace.h"
+
 #endif
 
 
@@ -125,13 +127,13 @@ private:
     // one for its state while executing user code, one for its state
     // while executing kernel code.
 
-        int userRegisters[NumTotalRegs];	// user-level CPU register state
+    int userRegisters[NumTotalRegs];    // user-level CPU register state
 
-      public:
-        void SaveUserState();		// save user-level register state
-        void RestoreUserState();		// restore user-level register state
+public:
+    void SaveUserState();        // save user-level register state
+    void RestoreUserState();        // restore user-level register state
 
-        AddrSpace *space;			// User code this thread is running.
+    AddrSpace *space;            // User code this thread is running.
 #endif
 };
 
