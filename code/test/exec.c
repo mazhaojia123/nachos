@@ -4,9 +4,8 @@
 
 #include "syscall.h"
 
-int main()
-{
+int main() {
     SpaceId pid;
-    pid=Exec("../test/halt.noff");
+    pid = Exec("../test/halt.noff");
     Halt();
 }

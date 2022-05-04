@@ -80,7 +80,7 @@ AddrSpace::AddrSpace(OpenFile *executable) {
     }
     if (!hasAvailablePid) {
         printf("Too many process in Nachos. \n");
-        return ;
+        return;
     }
 
     // lab78: 也就是说第一次到此时才会创建全局的物理页的映射
@@ -159,7 +159,7 @@ AddrSpace::AddrSpace(OpenFile *executable) {
 //        executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),
 //                           noffH.code.size, noffH.code.inFileAddr);
         // lab78: 我们首先按照一个不太对的方法来实现吧：因为可能潜在的内存不连续
-        int code_page = noffH.code.virtualAddr/PageSize;
+        int code_page = noffH.code.virtualAddr / PageSize;
         int code_offset = noffH.code.virtualAddr % PageSize;
         int code_phy_addr = pageTable[code_page].physicalPage * PageSize + code_offset;
         executable->ReadAt(&(machine->mainMemory[code_phy_addr]),
@@ -173,7 +173,7 @@ AddrSpace::AddrSpace(OpenFile *executable) {
 //        executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
 //                           noffH.initData.size, noffH.initData.inFileAddr);
         // lab78: 我们首先按照一个不太对的方法来实现吧：因为可能潜在的内存不连续
-        int data_page = noffH.initData.virtualAddr/PageSize;
+        int data_page = noffH.initData.virtualAddr / PageSize;
         int data_offset = noffH.initData.virtualAddr % PageSize;
         int data_phy_addr = pageTable[data_page].physicalPage * PageSize + data_offset;
         executable->ReadAt(&(machine->mainMemory[data_phy_addr]),
@@ -188,7 +188,7 @@ AddrSpace::AddrSpace(OpenFile *executable) {
 
 AddrSpace::~AddrSpace() {
     ThreadMap[spaceID] = 0;
-    for (int i = 0; i < numPages; i++){
+    for (int i = 0; i < numPages; i++) {
         bitmap->Clear(pageTable[i].physicalPage);
     }
     delete[] pageTable;

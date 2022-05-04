@@ -4,7 +4,6 @@
 
 #include "syscall.h"
 
-int main()
-{
+int main() {
     Exit(1);
 }

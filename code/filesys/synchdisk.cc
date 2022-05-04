@@ -24,11 +24,10 @@
 //----------------------------------------------------------------------
 
 static void
-DiskRequestDone (_int arg)
-{
-    SynchDisk* dsk = (SynchDisk *)arg;	// disk -> dsk
+DiskRequestDone(_int arg) {
+    SynchDisk *dsk = (SynchDisk *) arg;    // disk -> dsk
 
-    dsk->RequestDone();					// disk -> dsk
+    dsk->RequestDone();                    // disk -> dsk
 }
 
 //----------------------------------------------------------------------
@@ -40,11 +39,11 @@ DiskRequestDone (_int arg)
 //	   (usually, "DISK")
 //----------------------------------------------------------------------
 
-SynchDisk::SynchDisk(char* name)
-{
+SynchDisk::SynchDisk(char *name) {
     semaphore = new Semaphore("synch disk", 0);
     lock = new Lock("synch disk lock");
-    disk = new Disk(name, DiskRequestDone, (_int) this);
+    disk = new Disk(name, DiskRequestDone, (_int)
+    this);
 }
 
 //----------------------------------------------------------------------
@@ -53,8 +52,7 @@ SynchDisk::SynchDisk(char* name)
 //	abstraction.
 //----------------------------------------------------------------------
 
-SynchDisk::~SynchDisk()
-{
+SynchDisk::~SynchDisk() {
     delete disk;
     delete lock;
     delete semaphore;
@@ -70,13 +68,12 @@ SynchDisk::~SynchDisk()
 //----------------------------------------------------------------------
 
 void
-SynchDisk::ReadSector(int sectorNumber, char* data)
-{
+SynchDisk::ReadSector(int sectorNumber, char *data) {
     // lab5: 去 Ｄisk 找到 sectorNumber 对应的扇区
     //  然后把其中的内容放到 data 这个 char 数组中
-    lock->Acquire();			// only one disk I/O at a time
+    lock->Acquire();            // only one disk I/O at a time
     disk->ReadRequest(sectorNumber, data);
-    semaphore->P();			// wait for interrupt
+    semaphore->P();            // wait for interrupt
     lock->Release();
 }
 
@@ -90,12 +87,11 @@ SynchDisk::ReadSector(int sectorNumber, char* data)
 //----------------------------------------------------------------------
 
 void
-SynchDisk::WriteSector(int sectorNumber, char* data)
-{
+SynchDisk::WriteSector(int sectorNumber, char *data) {
     // lab5: 把 char 数组 data 的内容放到 sectorNumber 所对应的扇区
-    lock->Acquire();			// only one disk I/O at a time
+    lock->Acquire();            // only one disk I/O at a time
     disk->WriteRequest(sectorNumber, data);
-    semaphore->P();			// wait for interrupt
+    semaphore->P();            // wait for interrupt
     lock->Release();
 }
 
@@ -106,7 +102,6 @@ SynchDisk::WriteSector(int sectorNumber, char* data)
 //----------------------------------------------------------------------
 
 void
-SynchDisk::RequestDone()
-{ 
+SynchDisk::RequestDone() {
     semaphore->V();
 }

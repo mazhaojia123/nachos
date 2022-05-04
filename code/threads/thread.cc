@@ -168,12 +168,12 @@ Thread::Finish() {
     // lab78: 2. 检查是否有需要唤醒的进程，让该进程进入就绪状态
     int listLength = waitingList->ListLength();
     for (int i = 1; i <= listLength; i++) {
-        waitingThread = (Thread*)waitingList->getItem(i);
+        waitingThread = (Thread *) waitingList->getItem(i);
         if (currentThread->space->getSpaceID() == waitingThread->waitingProcessSpaceId) {
             // lab78: 也就是说我们找到了当前正在等待自己的进程，那么也就是说
             //  我们还没给它我们的返回值，所以我们要设置
             waitingThread->waitProcessExitCode = currentThread->getExitStatus();
-            scheduler->ReadyToRun((Thread*)waitingThread);
+            scheduler->ReadyToRun((Thread *) waitingThread);
             // 从 waiting list 中删除 第 i 个元素
             waitingList->RemoveItem(i);
             break;
@@ -396,6 +396,7 @@ Thread::StackAllocate(VoidFunctionPtr func, _int arg) {
 }
 
 #ifdef USER_PROGRAM
+
 #include "machine.h"
 
 //----------------------------------------------------------------------
@@ -408,10 +409,9 @@ Thread::StackAllocate(VoidFunctionPtr func, _int arg) {
 //----------------------------------------------------------------------
 
 void
-Thread::SaveUserState()
-{
+Thread::SaveUserState() {
     for (int i = 0; i < NumTotalRegs; i++)
-    userRegisters[i] = machine->ReadRegister(i);
+        userRegisters[i] = machine->ReadRegister(i);
 }
 
 //----------------------------------------------------------------------
@@ -424,10 +424,9 @@ Thread::SaveUserState()
 //----------------------------------------------------------------------
 
 void
-Thread::RestoreUserState()
-{
+Thread::RestoreUserState() {
     for (int i = 0; i < NumTotalRegs; i++)
-    machine->WriteRegister(i, userRegisters[i]);
+        machine->WriteRegister(i, userRegisters[i]);
 }
 
 // Join 将当前线程睡眠
@@ -444,7 +443,7 @@ void Thread::Join(int spaceId) {
     bool interminatedList = FALSE;
     int listLength = terminatedList->ListLength();
     for (int i = 1; i <= listLength; i++) {
-        thread = (Thread *)terminatedList->getItem(i);
+        thread = (Thread *) terminatedList->getItem(i);
         if (thread == NULL) {
             interminatedList = FALSE;
             // joinee 还在 READY Queue 还没有结束
@@ -464,7 +463,7 @@ void Thread::Join(int spaceId) {
     //  线程进入睡眠状态
     if (!interminatedList) {
         waitingProcessSpaceId = spaceId;
-        waitingList->Append((void*)this);
+        waitingList->Append((void *) this);
         currentThread->Sleep();
     }
 
@@ -489,10 +488,10 @@ void Thread::Terminated() {
     ASSERT(this == currentThread);
     ASSERT(interrupt->getLevel() == IntOff);
     status = TERMINATED;
-    terminatedList->Append((void*)this);
+    terminatedList->Append((void *) this);
 
     nextThread = scheduler->FindNextToRun();
-    while(nextThread == NULL) {
+    while (nextThread == NULL) {
         interrupt->Idle();
         nextThread = scheduler->FindNextToRun();
     }

@@ -15,14 +15,16 @@
 // one-lane, so cars may cross in one direction at a time only--otherwise
 // there is a head-on collision.
 class Bridge {
-  private:
+private:
     int numCars;
     int currentDirec;
     Condition *bridgeFull;
     Lock *lock;
-  public:
+public:
     Bridge();
+
     ~Bridge();
+
     void Arrive(int direc);   // Returns when it is OK for the car to cross
     void Cross(int direc);    // Doesn't do anything, except maybe print messages
     void Exit(int direc);     // Leave the bridge
@@ -32,8 +34,7 @@ class Bridge {
 // Bridge::Bridge
 //     Initialise the bridge to its initial state
 //----------------------------------------------------------------------
-Bridge::Bridge()
-{
+Bridge::Bridge() {
     numCars = 0;
     currentDirec = 0;
     bridgeFull = new Condition("bridge");
@@ -43,8 +44,7 @@ Bridge::Bridge()
 //----------------------------------------------------------------------
 // Bridge::~Bridge
 //----------------------------------------------------------------------
-Bridge::~Bridge()
-{
+Bridge::~Bridge() {
     delete bridgeFull;
     delete lock;
 }
@@ -55,8 +55,7 @@ Bridge::~Bridge()
 //         direc.  
 //----------------------------------------------------------------------
 void
-Bridge::Arrive(int direc)
-{
+Bridge::Arrive(int direc) {
     DEBUG('t', "Arriving at bridge.  Direction [%d]", direc);
     lock->Acquire();
 
@@ -65,8 +64,8 @@ Bridge::Arrive(int direc)
     //    or b) the bridge has less than 3 cars and traffic is flowing
     //          in the direction we want
     // Otherwise, wait
-    while((numCars > 0) && ((numCars >= 3) || (direc != currentDirec))) {
-	bridgeFull->Wait(lock);
+    while ((numCars > 0) && ((numCars >= 3) || (direc != currentDirec))) {
+        bridgeFull->Wait(lock);
     }
     numCars++;               // reserve a spot on the bridge
     currentDirec = direc;    // make sure the direction matches 
@@ -79,8 +78,7 @@ Bridge::Arrive(int direc)
 //         Car leaves bridge.
 //----------------------------------------------------------------------
 void
-Bridge::Exit(int direc)
-{
+Bridge::Exit(int direc) {
     lock->Acquire();
     numCars--;              // vacate our spot on the bridge
     DEBUG('t', "Direction [%d], bridge exit", direc);
@@ -93,8 +91,7 @@ Bridge::Exit(int direc)
 //         Car crosses bridge.
 //----------------------------------------------------------------------
 void
-Bridge::Cross(int direc)
-{
+Bridge::Cross(int direc) {
     DEBUG('t', "Direction [%d], crossing bridge", direc);
 }
 
@@ -111,35 +108,33 @@ Bridge *bridge = new Bridge;
 //
 //----------------------------------------------------------------------
 void
-SynchThread(_int which)
-{
+SynchThread(_int which) {
     int num;
     int direc;
-    
+
     for (num = 0; num < 5; num++) {
         direc = num % 2;  // set direction (alternates)
 // The following printf's need fixing for the different types of _int of which
-	printf("Direction [%d], Car [%d], Arriving...\n", direc, which);
-	bridge->Arrive(direc);
-	currentThread->Yield();
-	printf("Direction [%d], Car [%d], Crossing...\n", direc, which);
-	bridge->Cross(direc);
-	currentThread->Yield();
+        printf("Direction [%d], Car [%d], Arriving...\n", direc, which);
+        bridge->Arrive(direc);
+        currentThread->Yield();
+        printf("Direction [%d], Car [%d], Crossing...\n", direc, which);
+        bridge->Cross(direc);
+        currentThread->Yield();
         printf("Direction [%d], Car [%d], Exiting...\n", direc, which);
-	bridge->Exit(direc);
-	currentThread->Yield();
+        bridge->Exit(direc);
+        currentThread->Yield();
     }
 }
 
 void
-SynchTest()
-{
+SynchTest() {
     const int maxCars = 7;  // How much traffic?
     int i = 0;
     Thread *ts[maxCars];
 
-    for(i=0; i < maxCars; i++) {
-	ts[i] = new Thread("forked thread");
-	ts[i]->Fork(SynchThread, i);
+    for (i = 0; i < maxCars; i++) {
+        ts[i] = new Thread("forked thread");
+        ts[i]->Fork(SynchThread, i);
     }
 }

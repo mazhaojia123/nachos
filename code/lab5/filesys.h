@@ -87,9 +87,9 @@ public:
 
     void Print();            // List all the files and their contents
 
-    BitMap* getBitMap();
+    BitMap *getBitMap();
 
-    void setBitMap(BitMap* freeMap);
+    void setBitMap(BitMap *freeMap);
 
 private:
     // lab5: 所谓的文件系统就是维护两个结构？—— ”目录表文件“ ”位视图文件“

@@ -115,11 +115,11 @@ public:
 
     ~CatalogTree();
 
-    CatalogNode* getCurNode() {
+    CatalogNode *getCurNode() {
         return currentNode;
     }
 
-    std::vector<CatalogNode*> getChildren(); // 看成链表
+    std::vector<CatalogNode *> getChildren(); // 看成链表
 
     void eraseChild(const std::string &theRPath); // 看成二叉树
 
@@ -151,7 +151,7 @@ public:
 private:
     void erase(CatalogNode *cur); // 将当前的目录所在的子树释放掉
 
-    void printBT(const std::string& prefix, const CatalogNode* node, bool isLeft);
+    void printBT(const std::string &prefix, const CatalogNode *node, bool isLeft);
 
     static void ascendInsert(CatalogNode *theHead, CatalogNode *thePar, const std::string &rPath);
 

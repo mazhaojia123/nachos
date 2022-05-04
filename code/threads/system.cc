@@ -20,7 +20,7 @@ Timer *timer;                // the hardware timer device,
 // for invoking context switches
 
 #ifdef FILESYS_NEEDED
-FileSystem  *fileSystem;
+FileSystem *fileSystem;
 //#endi 修改bug
 # endif
 
@@ -29,7 +29,7 @@ SynchDisk   *synchDisk;
 #endif
 
 #ifdef USER_PROGRAM    // requires either FILESYS or FILESYS_STUB
-Machine *machine;	// user program memory and registers
+Machine *machine;    // user program memory and registers
 #endif
 
 #ifdef NETWORK
@@ -81,11 +81,11 @@ Initialize(int argc, char **argv) {
     bool randomYield = FALSE;
 
 #ifdef USER_PROGRAM
-    bool debugUserProg = FALSE;	// single step user program
+    bool debugUserProg = FALSE;    // single step user program
     bzero(ThreadMap, MAX_USERPOCESSES);
 #endif
 #ifdef FILESYS_NEEDED
-    bool format = FALSE;	// format disk
+    bool format = FALSE;    // format disk
 #endif
 #ifdef NETWORK
     double rely = 1;		// network reliability
@@ -155,7 +155,7 @@ Initialize(int argc, char **argv) {
     CallOnUserAbort(Cleanup);            // if user hits ctl-C
 
 #ifdef USER_PROGRAM
-    machine = new Machine(debugUserProg);	// this must come first
+    machine = new Machine(debugUserProg);    // this must come first
 #endif
 
 // lab5: 在这里开始创建了 SynchDisk, FileSystem

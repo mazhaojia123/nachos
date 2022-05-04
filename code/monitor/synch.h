@@ -38,16 +38,16 @@
 // now be different.
 
 class Semaphore {
-  public:
-    Semaphore(char* debugName, int initialValue);	// set initial value
-    ~Semaphore();   					// de-allocate semaphore
-    char* getName() { return name;}			// debugging assist
-    
-    void P();	 // these are the only operations on a semaphore
-    void V();	 // they are both *atomic*
-    
-  private:
-    char* name;        // useful for debugging
+public:
+    Semaphore(char *debugName, int initialValue);    // set initial value
+    ~Semaphore();                    // de-allocate semaphore
+    char *getName() { return name; }            // debugging assist
+
+    void P();     // these are the only operations on a semaphore
+    void V();     // they are both *atomic*
+
+private:
+    char *name;        // useful for debugging
     int value;         // semaphore value, always >= 0
     List *queue;       // threads waiting in P() for the value to be > 0
 };
@@ -65,21 +65,21 @@ class Semaphore {
 // (because the value might change immediately after you read it).  
 
 class Lock {
-  public:
-    Lock(char* debugName);  		// initialize lock to be FREE
-    ~Lock();				// deallocate lock
-    char* getName() { return name; }	// debugging assist
+public:
+    Lock(char *debugName);        // initialize lock to be FREE
+    ~Lock();                // deallocate lock
+    char *getName() { return name; }    // debugging assist
 
     void Acquire(); // these are the only operations on a lock
     void Release(); // they are both *atomic*
 
-    bool isHeldByCurrentThread();	// true if the current thread
-					// holds this lock.  Useful for
-					// checking in Release, and in
-					// Condition variable ops below.
+    bool isHeldByCurrentThread();    // true if the current thread
+    // holds this lock.  Useful for
+    // checking in Release, and in
+    // Condition variable ops below.
 
-  private:
-    char* name;				// for debugging
+private:
+    char *name;                // for debugging
     Thread *owner;                      // remember who acquired the lock
     Semaphore *lock;                    // use semaphore for the actual lock
 };
@@ -117,25 +117,25 @@ class Lock {
 // thread gets a chance to run.
 
 class Condition {
-  public:
-    Condition(char* debugName);		// initialize condition to 
-					// "no one waiting"
-    ~Condition();			// deallocate the condition
-    char* getName() { return (name); }
-    
-    void Wait(Lock *conditionLock); 	// these are the 3 operations on 
-					// condition variables; releasing the 
-					// lock and going to sleep are 
-					// *atomic* in Wait()
+public:
+    Condition(char *debugName);        // initialize condition to
+    // "no one waiting"
+    ~Condition();            // deallocate the condition
+    char *getName() { return (name); }
+
+    void Wait(Lock *conditionLock);    // these are the 3 operations on
+    // condition variables; releasing the
+    // lock and going to sleep are
+    // *atomic* in Wait()
     void Signal(Lock *conditionLock);   // conditionLock must be held by
     void Broadcast(Lock *conditionLock);// the currentThread for all of 
-					// these operations
+    // these operations
 
-  private:
-    char* name;
-    List* queue;  // threads waiting on the condition
-    Lock* lock;   // debugging aid:  used to check correctness of
-                  // arguments to Wait, Signal and Broacast
+private:
+    char *name;
+    List *queue;  // threads waiting on the condition
+    Lock *lock;   // debugging aid:  used to check correctness of
+    // arguments to Wait, Signal and Broacast
 };
 
 
@@ -144,26 +144,28 @@ class Condition {
 //given in page 195 of the textbook. -ptang (aug 1995)
 
 class Condition_H {
-  public:
-    Condition_H(char* debugName);		// initialize condition to 
-					// "no one waiting"
-    ~Condition_H();			// deallocate the condition
-    char* getName() { return (name); }
-    
-    void Wait(Semaphore *mutex, Semaphore *next, int *next_countPtr);
-                                        // mutex and next are two
-					// semaphores of the monitor ring,
-					// next-count is the counter
-					// for semaphore next.
-    void Signal(Semaphore *next, int *next_countPtr); 
-    void Broadcast(Semaphore *next, int *next_countPtr); 
+public:
+    Condition_H(char *debugName);        // initialize condition to
+    // "no one waiting"
+    ~Condition_H();            // deallocate the condition
+    char *getName() { return (name); }
 
-  private:
-    char* name;
+    void Wait(Semaphore *mutex, Semaphore *next, int *next_countPtr);
+
+    // mutex and next are two
+    // semaphores of the monitor ring,
+    // next-count is the counter
+    // for semaphore next.
+    void Signal(Semaphore *next, int *next_countPtr);
+
+    void Broadcast(Semaphore *next, int *next_countPtr);
+
+private:
+    char *name;
     // plus some other stuff you'll need to define
 
     Semaphore *sem; // semaphore for the waiting threads;
-    int  count;      // the number of waiting threads;
+    int count;      // the number of waiting threads;
 };
 
 #endif // SYNCH_H

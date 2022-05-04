@@ -30,13 +30,17 @@ extern Statistics *stats;            // performance metrics
 extern Timer *timer;                // the hardware alarm clock
 
 #ifdef USER_PROGRAM
+
 #include "machine.h"
-extern Machine* machine;	// user program memory and registers
+
+extern Machine *machine;    // user program memory and registers
 #endif
 
 #ifdef FILESYS_NEEDED        // FILESYS or FILESYS_STUB
+
 #include "filesys.h"
-extern FileSystem  *fileSystem;
+
+extern FileSystem *fileSystem;
 #endif
 
 #ifdef FILESYS

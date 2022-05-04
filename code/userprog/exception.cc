@@ -77,7 +77,7 @@ ExceptionHandler(ExceptionType which) {
     // lab78: 更改后的系统调用处理逻辑
     int i, addr;
     int spaceId;
-    Thread* thread;
+    Thread *thread;
     char filename[50];
     OpenFile *executable;
     char *forkedThreadName;
@@ -95,7 +95,7 @@ ExceptionHandler(ExceptionType which) {
                 i = 0;
                 do {
                     // lab78: 从内存中读取文件的名字
-                    machine->ReadMem(addr + i, 1, (int*)&filename[i]);
+                    machine->ReadMem(addr + i, 1, (int *) &filename[i]);
                 } while (filename[i++] != '\0');
 
                 printf("lab78: exec 文件名: %s\n", filename);

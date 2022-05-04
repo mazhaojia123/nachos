@@ -138,7 +138,8 @@ public:
     void SaveUserState();        // save user-level register state
     void RestoreUserState();        // restore user-level register state
     int getExitStatus() { return ExitStat; }
-    void setExitStatus(int es) { ExitStat = es;}
+
+    void setExitStatus(int es) { ExitStat = es; }
 
 
     AddrSpace *space;            // User code this thread is running.

@@ -259,7 +259,7 @@ void CatalogTree::setPath(const std::string &thePath) {
         CatalogNode *newCurrentNode = &root;
         std::vector<std::string> tmpPath = split(thePath);
 
-        for (auto &x : tmpPath) {
+        for (auto &x: tmpPath) {
             cur = newCurrentNode->child;
             while (cur != nullptr && cur->rPath != x)
                 cur = cur->sibling;
@@ -364,7 +364,7 @@ void CatalogTree::updatePar(CatalogNode *cur) {
     if (cur != nullptr) {
         currentNode = cur;
         std::vector<CatalogNode *> tmp = getChildren();
-        for (auto &item : tmp)
+        for (auto &item: tmp)
             item->parent = cur;
         updatePar(cur->child);
         updatePar(cur->sibling);
@@ -458,7 +458,7 @@ bool CatalogTree::findSetPath(const std::string &thePath) {
         CatalogNode *newCurrentNode = &root;
         std::vector<std::string> tmpPath = split(thePath);
 
-        for (auto &x : tmpPath) {
+        for (auto &x: tmpPath) {
             cur = newCurrentNode->child;
             while (cur != nullptr && cur->rPath != x)
                 cur = cur->sibling;
@@ -564,9 +564,9 @@ bool MultiLevelDir::Add(char *name, int newSector) {
     // 不存在
     std::vector<std::string> tmpPath = CatalogTree::split(name);
     t.setPath("/");
-    for (auto &x:tmpPath) {
-        if(!t.findSetPath(x)) {// 没找到这个路径
-            CatalogNode* old = t.getCurNode();
+    for (auto &x: tmpPath) {
+        if (!t.findSetPath(x)) {// 没找到这个路径
+            CatalogNode *old = t.getCurNode();
             t.insertChild(x);
             if (t.findSetPath(x)) {
                 CatalogNode *now = t.getCurNode();
@@ -597,7 +597,7 @@ bool MultiLevelDir::Remove(char *name) {
         t.setPathWithParent();
         std::vector<std::string> tmpPath = CatalogTree::split(name);
         t.eraseChild(*tmpPath.rbegin());
-        if (t.findSetPath(name)){
+        if (t.findSetPath(name)) {
             printf("failed to delete %s\n", tmpPath.rbegin()->c_str());
             return false;
         }

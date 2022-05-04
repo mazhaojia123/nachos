@@ -6,6 +6,7 @@
 #define NACHOS_PROGTEST_H
 
 extern void StartProcess(int spaceId);
+
 extern AddrSpace *space;
 
 #endif //NACHOS_PROGTEST_H

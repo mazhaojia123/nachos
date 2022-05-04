@@ -60,7 +60,7 @@
 #define WhenDonePCState	(S2/4-1)
 #define StartupPCState	(S3/4-1)
 
-#endif 	// HOST_MIPS
+#endif    // HOST_MIPS
 
 #ifdef HOST_SPARC
 
@@ -89,7 +89,7 @@
 #define InitialArgState (I1/4-1)
 #define WhenDonePCState (I2/4-1)
 #define StartupPCState  (I3/4-1)
-#endif 	// HOST_SPARC
+#endif    // HOST_SPARC
 
 #ifdef HOST_SNAKE
 
@@ -124,7 +124,7 @@
 #define InitialArgState (S1/4-1)
 #define WhenDonePCState (S2/4-1)
 #define StartupPCState  (S3/4-1)
-#endif 	// HOST_SNAKE
+#endif    // HOST_SNAKE
 
 #ifdef HOST_i386
 

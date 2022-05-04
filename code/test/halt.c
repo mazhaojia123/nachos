@@ -13,13 +13,12 @@
 #include "syscall.h"
 
 int
-main()
-{
-    int i,j,k;
-    k=3;
-    i=2; 
-    j=j-1;
-    k=i-j+k;
+main() {
+    int i, j, k;
+    k = 3;
+    i = 2;
+    j = j - 1;
+    k = i - j + k;
     Halt();
     /* not reached */
 }

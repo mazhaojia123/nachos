@@ -95,9 +95,9 @@ Scheduler::Run(Thread *nextThread) {
     Thread *oldThread = currentThread;
 
 #ifdef USER_PROGRAM            // ignore until running user programs
-    if (currentThread->space != NULL) {	// if this thread is a user program,
+    if (currentThread->space != NULL) {    // if this thread is a user program,
         currentThread->SaveUserState(); // save the user's CPU registers
-    currentThread->space->SaveState();
+        currentThread->space->SaveState();
     }
 #endif
 
@@ -129,9 +129,9 @@ Scheduler::Run(Thread *nextThread) {
     }
 
 #ifdef USER_PROGRAM
-    if (currentThread->space != NULL) {		// if there is an address space
+    if (currentThread->space != NULL) {        // if there is an address space
         currentThread->RestoreUserState();     // to restore, do it.
-    currentThread->space->RestoreState();
+        currentThread->space->RestoreState();
     }
 #endif
 }
@@ -157,7 +157,7 @@ List *Scheduler::getWaitingList() {
 
 void Scheduler::deleteTerminatedThread(int spaceId) {
     if (terminatedList->IsEmpty())
-        return ;
+        return;
 
     ListElement *cur = terminatedList->getFirst();
     ListElement *lst = terminatedList->getLast();
@@ -165,11 +165,11 @@ void Scheduler::deleteTerminatedThread(int spaceId) {
 
 
     // 检查第一个元素是不是
-    Thread *now = (Thread*)cur->item;
+    Thread *now = (Thread *) cur->item;
     if (now->space->getSpaceID() == spaceId) {
         // 按理说他会自己管理首尾指针
         terminatedList->Remove();
-        return ;
+        return;
     }
 
     if (cur == lst) {
