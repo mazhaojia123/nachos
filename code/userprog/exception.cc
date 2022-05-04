@@ -154,6 +154,118 @@ ExceptionHandler(ExceptionType which) {
                 currentThread->Yield();
                 AdvancePC();
                 break;
+            case SC_Create: {
+                int base = machine->ReadRegister(4);
+                int value;
+                int count = 0;
+                char *FileName = new char[128];
+                do {
+                    machine->ReadMem(base + count, 1, &value);
+                    FileName[count] = *(char *) &value;
+                    count++;
+                } while (*(char *) &value != '\0' && count < 128);
+
+                int fileDescriptor = OpenForWrite(FileName);
+                if (fileDescriptor == -1)
+                    printf("create file %s failed ! \n", FileName);
+                else
+                    printf("create file %s succeed! The file id is %d. \n", FileName, fileDescriptor);
+
+                Close(fileDescriptor);
+
+                machine->WriteRegister(2, fileDescriptor);
+                // lab78: 为什么没有返回值？
+                AdvancePC();
+                break;
+            }
+            case SC_Open: {
+                int base = machine->ReadRegister(4);
+                int value;
+                int count = 0;
+                char *FileName = new char[128];
+                do {
+                    machine->ReadMem(base + count, 1, &value);
+                    FileName[count] = *(char *) &value;
+                    count++;
+                } while (*(char *) &value != '\0' && count < 128);
+
+                int fileDescriptor = OpenForReadWrite(FileName, FALSE);
+                if (fileDescriptor == -1)
+                    printf("Open file %s failed!\n", FileName);
+                else
+                    printf("Open file %s succeed! The file id is %d. \n", FileName, fileDescriptor);
+                machine->WriteRegister(2, fileDescriptor);
+                AdvancePC();
+                break;
+            }
+            case SC_Write: {
+                int base = machine->ReadRegister(4);
+                int size = machine->ReadRegister(5);
+                int fileId = machine->ReadRegister(6);
+                int value;
+                int count = 0;
+
+                printf("base=%d, size=%d, fileId=%d \n", base, size, fileId);
+                OpenFile *openfile = new OpenFile(fileId);
+                ASSERT(openfile != NULL);
+
+                char *buffer = new char[128];
+                do {
+                    machine->ReadMem(base + count, 1, &value);
+                    buffer[count] = *(char *) &value;
+                    count++;
+                } while ((*(char *) &value != '\0') && (count < size));
+                buffer[size] = '\0';
+
+                int WritePosition;
+                if (fileId == 1)
+                    WritePosition = 0;
+                else
+                    WritePosition = openfile->Length();
+
+                int writtenBytes = openfile->WriteAt(buffer, size, WritePosition);
+                if ((writtenBytes) == 0)
+                    printf("write file failed!\n");
+                else
+                    printf("\"%s\" has wrote in file %d succeed!\n", buffer, fileId);
+                // lab78: 为什么之前没有将这个内容放到
+                machine->WriteRegister(2, size);
+                AdvancePC();
+
+                break;
+            }
+            case SC_Read: {
+                int base = machine->ReadRegister(4);
+                int size = machine->ReadRegister(5);
+                int fileId = machine->ReadRegister(6);
+
+                OpenFile *openfile = new OpenFile(fileId);
+                char buffer[size];
+                int readnum = 0;
+                readnum = openfile->Read(buffer, size);
+
+                for (int i = 0; i < size; i++)
+                    if (!machine->WriteMem(base, 1, buffer[i]))
+                        printf("This is something wrong.\n");
+                buffer[size] = '\0';
+                printf("read succeed! the content is \"%s\" , the length is %d\n", buffer, size);
+                machine->WriteRegister(2, readnum);
+                AdvancePC();
+                break;
+            }
+            case SC_Close: {
+                int fileId = machine->ReadRegister(4);
+                //printf("SC_Close: fileId in $4 = %d\n",fileId);
+                //void Close(int fd) in sysdep.cc
+
+                //OpenFile* openfile=new OpenFile(fileId);
+                //delete openfile;  //does not work well
+                Close(fileId);
+
+                printf("File %d  closed succeed!\n", fileId);
+                AdvancePC();
+                break;
+            }
             default:
                 printf("Unexpected syscall %d %d\n", which, type);
                 ASSERT(FALSE);
