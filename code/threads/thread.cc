@@ -24,6 +24,8 @@
 // execution stack, for detecting
 // stack overflows
 
+int waitingThreadExitCode;
+
 //----------------------------------------------------------------------
 // Thread::Thread
 // 	Initialize a thread control block, so that we can then call
@@ -33,7 +35,9 @@
 //----------------------------------------------------------------------
 
 Thread::Thread(char *threadName) {
-    name = threadName;
+    name = new char[50];
+    strcpy(name, threadName);
+//    name = threadName;
     stackTop = NULL;
     stack = NULL;
     status = JUST_CREATED;
@@ -145,12 +149,44 @@ void
 Thread::Finish() {
     (void) interrupt->SetLevel(IntOff);
     ASSERT(this == currentThread);
-
     DEBUG('t', "Finishing thread \"%s\"\n", getName());
 
+#ifdef USER_PROGRAM
+    // to be added ----------------------------------------------------------
+    // lab78: 1. 记录当前的返回值
+    // lab78:
+    //  问题1. 在此时它是否知道有无正在等待的？
+//    waitingThreadExitCode = currentThread->getExitStatus();
+//    waitingThreadExitCode = 0;
+    // joinee finish，然后需要 wake up 调用 join 的函数
+    List *ReadyList = scheduler->getReadyList();
+    List *waitingList = scheduler->getWaitingList();
+    Thread *waitingThread;
+
+    // 如果此时我们的 joiner 还在 waitingList，joinee 就去 wake up
+    // 这个 joiner, 当 joinee 调用 Finish 时
+    // lab78: 2. 检查是否有需要唤醒的进程，让该进程进入就绪状态
+    int listLength = waitingList->ListLength();
+    for (int i = 1; i <= listLength; i++) {
+        waitingThread = (Thread*)waitingList->getItem(i);
+        if (currentThread->space->getSpaceID() == waitingThread->waitingProcessSpaceId) {
+            // lab78: 也就是说我们找到了当前正在等待自己的进程，那么也就是说
+            //  我们还没给它我们的返回值，所以我们要设置
+            waitingThread->waitProcessExitCode = currentThread->getExitStatus();
+            scheduler->ReadyToRun((Thread*)waitingThread);
+            // 从 waiting list 中删除 第 i 个元素
+            waitingList->RemoveItem(i);
+            break;
+        }
+    }
+    Terminated();
+    // ^^ to be added ----------------------------------------------------------
+#else
     threadToBeDestroyed = currentThread;
     Sleep();                    // invokes SWITCH
     // not reached
+#endif
+
 }
 
 //----------------------------------------------------------------------
@@ -393,4 +429,74 @@ Thread::RestoreUserState()
     for (int i = 0; i < NumTotalRegs; i++)
     machine->WriteRegister(i, userRegisters[i]);
 }
+
+// Join 将当前线程睡眠
+void Thread::Join(int spaceId) {
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+    // lab78: 1. 记下当前进程正在等待的进程号
+    currentThread->waitingProcessSpaceId = spaceId;
+
+    // lab78: 如果 joinee 还没有加入到 terminated list?
+    Thread *thread;
+    List *terminatedList = scheduler->getTerminatedList();
+    List *waitingList = scheduler->getWaitingList();
+
+    bool interminatedList = FALSE;
+    int listLength = terminatedList->ListLength();
+    for (int i = 1; i <= listLength; i++) {
+        thread = (Thread *)terminatedList->getItem(i);
+        if (thread == NULL) {
+            interminatedList = FALSE;
+            // joinee 还在 READY Queue 还没有结束
+        }
+        if (thread->space->getSpaceID() == spaceId) {
+            // joinee 已经完成；也就是说在队列里找到了这个
+            // 那么此时是有exitcode的，我们需要设置
+            currentThread->waitProcessExitCode = thread->getExitStatus();
+            interminatedList = TRUE;
+            break;
+        }
+        interminatedList = FALSE;
+    }
+
+    // 此时 Joinee 还没有结束
+    // lab78: 检查等待进程是否已经退出，如果没有退出，我们就让当前
+    //  线程进入睡眠状态
+    if (!interminatedList) {
+        waitingProcessSpaceId = spaceId;
+        waitingList->Append((void*)this);
+        currentThread->Sleep();
+    }
+
+    // 此时再回来 joinee 已经结束，在 terminated List, 清空它，然后返回
+    // lab78: 只有一种可能，被等待的线程唤醒。唤醒之后将等待线程清理掉
+    //  然后自己继续执行，返回等待进程的退出的值。
+//    currentThread->waitProcessExitCode = waitingThreadExitCode;
+    // 删除掉终止了的线程 joinee
+    scheduler->deleteTerminatedThread(spaceId);
+    interrupt->SetLevel(oldLevel);
+}
+
+void Thread::Terminated() {
+    // lab78: 3. 进入 terminated 状态，并且让 scheduler
+    //  调度后续的线程执行
+    //  我们可以看出，接下来调度的进程并非必然为等待该进程的进程。
+    //  所以使用一个全局变量传递返回值是不一定正确的
+    List *terminatedList = scheduler->getTerminatedList();
+
+    Thread *nextThread;
+
+    ASSERT(this == currentThread);
+    ASSERT(interrupt->getLevel() == IntOff);
+    status = TERMINATED;
+    terminatedList->Append((void*)this);
+
+    nextThread = scheduler->FindNextToRun();
+    while(nextThread == NULL) {
+        interrupt->Idle();
+        nextThread = scheduler->FindNextToRun();
+    }
+    scheduler->Run(nextThread);
+}
+
 #endif

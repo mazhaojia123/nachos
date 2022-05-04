@@ -192,6 +192,8 @@ private:
     // time reaches this value
 };
 
+extern void AdvancePC();
+
 extern void ExceptionHandler(ExceptionType which);
 // Entry point into Nachos for handling
 // user system calls and exceptions

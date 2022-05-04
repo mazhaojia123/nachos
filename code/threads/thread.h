@@ -61,7 +61,7 @@
 
 // Thread state
 enum ThreadStatus {
-    JUST_CREATED, RUNNING, READY, BLOCKED
+    JUST_CREATED, RUNNING, READY, BLOCKED, TERMINATED
 };
 
 // external function, dummy routine whose sole job is to call Thread::Print
@@ -109,6 +109,10 @@ public:
 
     void Print() { printf("%s, ", name); }
 
+    void Join(int SpaceId);
+
+    void Terminated();
+
 private:
     // some of the private data for this class is listed above
 
@@ -129,11 +133,19 @@ private:
 
     int userRegisters[NumTotalRegs];    // user-level CPU register state
 
+
 public:
     void SaveUserState();        // save user-level register state
     void RestoreUserState();        // restore user-level register state
+    int getExitStatus() { return ExitStat; }
+    void setExitStatus(int es) { ExitStat = es;}
+
 
     AddrSpace *space;            // User code this thread is running.
+    int waitProcessExitCode;
+    int UserProgramId;              // 这个似乎就是当前进程id 啊，完全没必要吧！？
+    int waitingProcessSpaceId;      // 当前线程正在等待结束的进程的 id
+    int ExitStat;
 #endif
 };
 

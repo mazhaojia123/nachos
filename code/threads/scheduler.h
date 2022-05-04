@@ -17,6 +17,9 @@
 // the data structures and operations needed to keep track of which 
 // thread is running, and which threads are ready but not running.
 
+
+extern int waitingThreadExitCode;
+
 class Scheduler {
 public:
     Scheduler();            // Initialize list of ready threads
@@ -28,9 +31,21 @@ public:
     void Run(Thread *nextThread);    // Cause nextThread to start running
     void Print();            // Print contents of ready list
 
+    List *getTerminatedList();
+    List *getWaitingList();
+    List *getReadyList() { return readyList; }
+
+    void deleteTerminatedThread(int spaceId);
+    void emptyList(List* lst) {
+        delete lst;
+        lst = NULL;
+        // TODO: 没有回收内存的糟糕实现
+    }
 private:
     List *readyList;        // queue of threads that are ready to run,
     // but not running
+    List *waitingList;
+    List *terminatedList;
 };
 
 #endif // SCHEDULER_H

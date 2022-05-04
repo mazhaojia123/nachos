@@ -29,6 +29,13 @@
 
 Scheduler::Scheduler() {
     readyList = new List;
+#ifdef USER_PROGRAM
+    // lab78: 如果 joinee 没有退出，joiner 进入等待
+    waitingList = new List;
+    // lab78: 线程调用了 Finish() 后进入这个状态
+    //  Joiner 通过检查这个队列，确定 Joinee 是否已经退出
+    terminatedList = new List;
+#endif
 }
 
 //----------------------------------------------------------------------
@@ -138,4 +145,49 @@ void
 Scheduler::Print() {
     printf("Ready list contents:\n");
     readyList->Mapcar((VoidFunctionPtr) ThreadPrint);
+}
+
+List *Scheduler::getTerminatedList() {
+    return terminatedList;
+}
+
+List *Scheduler::getWaitingList() {
+    return waitingList;
+}
+
+void Scheduler::deleteTerminatedThread(int spaceId) {
+    if (terminatedList->IsEmpty())
+        return ;
+
+    ListElement *cur = terminatedList->getFirst();
+    ListElement *lst = terminatedList->getLast();
+    ListElement *prv = NULL;
+
+
+    // 检查第一个元素是不是
+    Thread *now = (Thread*)cur->item;
+    if (now->space->getSpaceID() == spaceId) {
+        // 按理说他会自己管理首尾指针
+        terminatedList->Remove();
+        return ;
+    }
+
+    if (cur == lst) {
+        // 就一个元素直接返回
+        return;
+    }
+
+    prv = cur;
+    cur = prv->next;
+
+    for (; cur != lst; cur = cur->next, prv = prv->next) {
+        if (now->space->getSpaceID() == spaceId) {
+            // 找到之后删除
+            prv->next = cur->next;
+            if (cur == terminatedList->getLast()) // 检查是不是最后一个元素
+                terminatedList->setLast(prv);
+            delete cur;
+            return;
+        }
+    }
 }

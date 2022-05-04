@@ -19,6 +19,7 @@
 #include "system.h"
 #include "addrspace.h"
 #include "noff.h"
+#include "bitmap.h"
 
 //----------------------------------------------------------------------
 // SwapHeader
@@ -56,9 +57,35 @@ SwapHeader(NoffHeader *noffH) {
 //	"executable" is the file containing the object code to load into memory
 //----------------------------------------------------------------------
 
+BitMap *bitmap;
+bool ThreadMap[MAX_USERPOCESSES]; // lab78: 这个初始化其实默认了还没有分配
+
 AddrSpace::AddrSpace(OpenFile *executable) {
     NoffHeader noffH;
     unsigned int i, size;
+
+    // --------------- !! added by yourself ???? ----------------------
+    // 一次最多允许 MAX_USERPROCESSES user processes execcutables concurrently.
+    // spaceID, i.e. pid
+    // lab78: 也就是说，这里我们首先尝试去分配一个 spaceID
+    bool hasAvailablePid = false;
+    for (int i = 100; i < MAX_USERPOCESSES; i++) { // 0~99 是内核
+        // lab78: 这里的 threadMap 是什么东西？
+        if (!ThreadMap[i]) {
+            ThreadMap[i] = true;
+            spaceID = i;  // lab78: 这个到底是从哪来的？？？
+            hasAvailablePid = true;
+            break;
+        }
+    }
+    if (!hasAvailablePid) {
+        printf("Too many process in Nachos. \n");
+        return ;
+    }
+
+    // lab78: 也就是说第一次到此时才会创建全局的物理页的映射
+    if (bitmap == NULL)
+        bitmap = new BitMap(NumPhysPages);
 
     // lab6: 首先把 noffH 给读出来
     executable->ReadAt((char *) &noffH, sizeof(noffH), 0);
@@ -86,14 +113,27 @@ AddrSpace::AddrSpace(OpenFile *executable) {
 
     DEBUG('a', "Initializing address space, num pages %d, size %d\n",
           numPages, size);
-// first, set up the translation
-    // lab6: 创建页表, 并做初始化
-    //  其实我们发现，载入程序的时候，该文件的 code 和 data 都放入了物理内存
-    //  而且采取了物理地址 == 虚拟地址的方法
+
+//// first, set up the translation
+//    // lab6: 创建页表, 并做初始化
+//    //  其实我们发现，载入程序的时候，该文件的 code 和 data 都放入了物理内存
+//    //  而且采取了物理地址 == 虚拟地址的方法
+//    pageTable = new TranslationEntry[numPages];
+//    for (i = 0; i < numPages; i++) {
+//        pageTable[i].virtualPage = i;    // for now, virtual page # = phys page #
+//        pageTable[i].physicalPage = i;
+//        pageTable[i].valid = TRUE;
+//        pageTable[i].use = FALSE;
+//        pageTable[i].dirty = FALSE;
+//        pageTable[i].readOnly = FALSE;  // if the code segment was entirely on
+//        // a separate page, we could set its
+//        // pages to be read-only
+//    }
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
         pageTable[i].virtualPage = i;    // for now, virtual page # = phys page #
-        pageTable[i].physicalPage = i;
+        pageTable[i].physicalPage = bitmap->Find();
+        ASSERT(pageTable[i].physicalPage != -1);
         pageTable[i].valid = TRUE;
         pageTable[i].use = FALSE;
         pageTable[i].dirty = FALSE;
@@ -102,16 +142,27 @@ AddrSpace::AddrSpace(OpenFile *executable) {
         // pages to be read-only
     }
 
-// zero out the entire address space, to zero the unitialized data segment 
+
+// zero out the entire address space, to zero the unitialized data segment
 // and the stack segment
-    bzero(machine->mainMemory, size);
+    // lab78: 我们在思考一个问题，下面这句应当注释掉，因为我们使用了位视图
+    //  用来分配物理内存的空间，所以没必要先清零内存。
+//    bzero(machine->mainMemory, size);
 
 // then, copy in the code and data segments into memory
     if (noffH.code.size > 0) {
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n",
               noffH.code.virtualAddr, noffH.code.size);
         // lab6: 如果代码区不为空，那么就读到主存的某个位置去？
-        executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),
+        // lab78：如果这样读进来岂不是有问题？
+        //  我们似乎需要将几个段的开头都读进来
+//        executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),
+//                           noffH.code.size, noffH.code.inFileAddr);
+        // lab78: 我们首先按照一个不太对的方法来实现吧：因为可能潜在的内存不连续
+        int code_page = noffH.code.virtualAddr/PageSize;
+        int code_offset = noffH.code.virtualAddr % PageSize;
+        int code_phy_addr = pageTable[code_page].physicalPage * PageSize + code_offset;
+        executable->ReadAt(&(machine->mainMemory[code_phy_addr]),
                            noffH.code.size, noffH.code.inFileAddr);
     }
     if (noffH.initData.size > 0) {
@@ -119,10 +170,15 @@ AddrSpace::AddrSpace(OpenFile *executable) {
               noffH.initData.virtualAddr, noffH.initData.size);
         // lab6: 如果代码的数据区不为空，那么就读到主存的某个位置上去
         //  这里有一个和上面同样的问题 —— 为什么是虚地址, 但是使用的是物理内存?
-        executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
+//        executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
+//                           noffH.initData.size, noffH.initData.inFileAddr);
+        // lab78: 我们首先按照一个不太对的方法来实现吧：因为可能潜在的内存不连续
+        int data_page = noffH.initData.virtualAddr/PageSize;
+        int data_offset = noffH.initData.virtualAddr % PageSize;
+        int data_phy_addr = pageTable[data_page].physicalPage * PageSize + data_offset;
+        executable->ReadAt(&(machine->mainMemory[data_phy_addr]),
                            noffH.initData.size, noffH.initData.inFileAddr);
     }
-
 }
 
 //----------------------------------------------------------------------
@@ -131,6 +187,10 @@ AddrSpace::AddrSpace(OpenFile *executable) {
 //----------------------------------------------------------------------
 
 AddrSpace::~AddrSpace() {
+    ThreadMap[spaceID] = 0;
+    for (int i = 0; i < numPages; i++){
+        bitmap->Clear(pageTable[i].physicalPage);
+    }
     delete[] pageTable;
 }
 

@@ -13,6 +13,18 @@
 #include "console.h"
 #include "addrspace.h"
 #include "synch.h"
+#include "progtest.h"
+
+//extern AddrSpace* space;
+
+void StartProcess(int spaceId) {
+    space->InitRegisters();
+    space->RestoreState();
+
+
+    machine->Run();
+    ASSERT(FALSE);
+}
 
 //----------------------------------------------------------------------
 // StartProcess

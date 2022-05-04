@@ -24,6 +24,18 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
+#include "progtest.h"
+
+AddrSpace *space;
+
+
+// AdvancePC 用来增加 PC 寄存器，只有在系统调用的异常处理过程中被使用
+// 防止我们重启系统调用的异常程序，造成无限循环
+void AdvancePC() {
+    machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
+    machine->WriteRegister(PCReg, machine->ReadRegister(PCReg) + 4);
+    machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg) + 4);
+}
 
 //----------------------------------------------------------------------
 // ExceptionHandler
@@ -50,13 +62,105 @@
 
 void
 ExceptionHandler(ExceptionType which) {
+    // lab78: 从 2 号寄存器里面拿到 ”系统调用号“
     int type = machine->ReadRegister(2);
 
-    if ((which == SyscallException) && (type == SC_Halt)) {
-        DEBUG('a', "Shutdown, initiated by user program.\n");
-        interrupt->Halt();
+//    // lab78, old: 这里处理的系统调用
+//    if ((which == SyscallException) && (type == SC_Halt)) {
+//        DEBUG('a', "Shutdown, initiated by user program.\n");
+//        interrupt->Halt();
+//    } else {
+//        printf("Unexpected user mode exception %d %d\n", which, type);
+//        ASSERT(FALSE);
+//    }
+
+    // lab78: 更改后的系统调用处理逻辑
+    int i, addr;
+    int spaceId;
+    Thread* thread;
+    char filename[50];
+    OpenFile *executable;
+    char *forkedThreadName;
+    int ExitStatus;
+    if (which == SyscallException) {
+        switch (type) {
+            case SC_Halt:
+                DEBUG('a', "Shutdown, initiated by user program. \n");
+                interrupt->Halt();
+                break;
+            case SC_Exec:
+                // lab78: 增加实现
+                printf("Execute system call of Exec()\n");
+                addr = machine->ReadRegister(4);
+                i = 0;
+                do {
+                    // lab78: 从内存中读取文件的名字
+                    machine->ReadMem(addr + i, 1, (int*)&filename[i]);
+                } while (filename[i++] != '\0');
+
+                printf("lab78: exec 文件名: %s\n", filename);
+                executable = fileSystem->Open(filename);
+                if (executable == NULL) {
+                    printf("Unable to open file %s\n", filename);
+                    return;
+                }
+
+                // lab78: 创建一个用户空间
+                //  这个space要怎么把他传给？
+                space = new AddrSpace(executable);
+                delete executable;
+
+                forkedThreadName = filename;
+
+                // lab78: 创建一个新的核心线程，并将这个用户进程映射到核心线程上
+                thread = new Thread(forkedThreadName);
+                thread->Fork(StartProcess, space->getSpaceID());
+
+                thread->space = space;      // 用户线程映射到核心线程
+
+                // lab78: 触发线程的切换
+                currentThread->Yield();
+                // lab78: 我们把 spaceID 作为此调用的返回值返回
+                machine->WriteRegister(2, space->getSpaceID());
+
+                printf("Exec(%s): \n", filename);
+
+                AdvancePC();
+                break;
+            case SC_Join:
+                printf("Execute system call of Join(). \n");
+                spaceId = machine->ReadRegister(4);
+                currentThread->Join(spaceId);
+                // 返回 Joinee 的退出码 waitProcessExitCode
+                machine->WriteRegister(2, currentThread->waitProcessExitCode);
+                printf("lab78: waitProcessExitCode is %d\n", currentThread->waitProcessExitCode);
+                AdvancePC();
+                break;
+            case SC_Exit:
+                ExitStatus = machine->ReadRegister(4);
+                printf("lab78: ExitStatus is %d\n", ExitStatus);
+                machine->WriteRegister(2, ExitStatus);
+                currentThread->setExitStatus(ExitStatus);
+                if (ExitStatus == 99) {
+                    List *terminatedList = scheduler->getTerminatedList();
+                    scheduler->emptyList(terminatedList);
+                }
+                printf("Execute system call of Exit(). \n");
+                AdvancePC();
+                currentThread->Finish();
+                delete currentThread->space;
+                break;
+            case SC_Yield:
+                currentThread->Yield();
+                AdvancePC();
+                break;
+            default:
+                printf("Unexpected syscall %d %d\n", which, type);
+                ASSERT(FALSE);
+        }
     } else {
         printf("Unexpected user mode exception %d %d\n", which, type);
         ASSERT(FALSE);
     }
 }
+

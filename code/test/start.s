@@ -39,6 +39,13 @@ __start:
  *
  * 	The return value is in r2. This follows the standard C calling
  * 	convention on the MIPS.
+ * 	lab78:
+ * 	    1. r2 : 系统调用号
+ * 	    2. r4 : arg1
+ * 	    3. r5 : arg2
+ * 	    4. r6 : arg3
+ * 	    5. r7 : arg4
+ * 	    6. r2 : return value (上面的是传入参数)
  * -------------------------------------------------------------
  */
 
@@ -61,8 +68,8 @@ Exit:
 	.globl Exec
 	.ent	Exec
 Exec:
-	addiu $2,$0,SC_Exec
-	syscall
+	addiu $2,$0,SC_Exec // 首先把二号寄存器的值做修改
+	syscall             // 这个 syscall 是什么？
 	j	$31
 	.end Exec
 

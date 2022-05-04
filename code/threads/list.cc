@@ -31,7 +31,7 @@ ListElement::ListElement(void *itemPtr, int sortKey)
 {
      item = itemPtr;
      key = sortKey;
-     next = NULL;	// assume we'll put it at the end of the list 
+     next = NULL;	// assume we'll put it at the end of the list
 }
 
 //----------------------------------------------------------------------
@@ -41,8 +41,8 @@ ListElement::ListElement(void *itemPtr, int sortKey)
 //----------------------------------------------------------------------
 
 List::List()
-{ 
-    first = last = NULL; 
+{
+    first = last = NULL;
 }
 
 //----------------------------------------------------------------------
@@ -56,7 +56,7 @@ List::List()
 //----------------------------------------------------------------------
 
 List::~List()
-{ 
+{
     while (Remove() != NULL)
 	;	 // delete all the list elements
 }
@@ -152,12 +152,12 @@ List::Mapcar(VoidFunctionPtr func)
 //----------------------------------------------------------------------
 
 bool
-List::IsEmpty() 
-{ 
+List::IsEmpty()
+{
     if (first == NULL)
         return TRUE;
     else
-	return FALSE; 
+	return FALSE;
 }
 
 //----------------------------------------------------------------------
@@ -184,7 +184,7 @@ List::SortedInsert(void *item, int sortKey)
     if (IsEmpty()) {	// if list is empty, put
         first = element;
         last = element;
-    } else if (sortKey < first->key) {	
+    } else if (sortKey < first->key) {
 		// item goes on front of list
 	element->next = first;
 	first = element;
@@ -220,11 +220,11 @@ List::SortedRemove(int *keyPtr)
     ListElement *element = first;
     void *thing;
 
-    if (IsEmpty()) 
+    if (IsEmpty())
 	return NULL;
 
     thing = first->item;
-    if (first == last) {	// list had one item, now has none 
+    if (first == last) {	// list had one item, now has none
         first = NULL;
 	last = NULL;
     } else {
@@ -234,5 +234,54 @@ List::SortedRemove(int *keyPtr)
         *keyPtr = element->key;
     delete element;
     return thing;
+}
+
+int List::ListLength() {
+    if (IsEmpty()) {
+        return 0;
+    } else {
+        ListElement* cur = first;
+        int i = 1;
+        for (; cur != last; i++, cur = cur->next) {
+            ;
+        }
+        return i;
+    }
+}
+
+void *List::getItem(int i) {
+    ListElement *cur = first;
+    for (int k = 1; k != i; k++) {
+        cur = cur->next;
+    }
+    return cur->item;
+}
+
+void List::RemoveItem(int i) {
+    int len = ListLength();
+    if (i == 1) {
+        Remove();
+        return;
+    } else if (len == 1)
+        return;
+    else {
+        ListElement *cur, *prv;
+        cur = first->next;
+        prv = first;
+
+        int k;
+        for (k = 2; k != i && k <= len; k++) {
+            cur = cur->next;
+            prv = prv->next;
+        }
+
+        if (k == i) {
+            prv->next = cur->next;
+            if (k == len) {
+                last = prv;
+            }
+            delete cur;
+        }
+    }
 }
 
