@@ -45,6 +45,7 @@ public:
         // TODO: 没有回收内存的糟糕实现
     }
 
+    void PrintThreads();
 private:
     List *readyList;        // queue of threads that are ready to run,
     // but not running

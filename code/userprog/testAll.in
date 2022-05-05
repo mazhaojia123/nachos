@@ -1,0 +1,18 @@
+help
+fdisk
+cf newFile
+ls
+cat newFile
+ucp Makefile Makefile
+cp Makefile Makefile_cp
+nap Makefile newFile
+cat newFile
+cat Makefile
+cat Makefile_cp
+rm newFile
+rm Makefile
+rm Makefile_cp
+ps
+ucp ../test/hello.noff hello.noff
+hello.noff
+ps

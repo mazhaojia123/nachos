@@ -20,6 +20,7 @@
 #include "addrspace.h"
 #include "noff.h"
 #include "bitmap.h"
+#include "openfile.h"
 
 //----------------------------------------------------------------------
 // SwapHeader
@@ -179,6 +180,17 @@ AddrSpace::AddrSpace(OpenFile *executable) {
         executable->ReadAt(&(machine->mainMemory[data_phy_addr]),
                            noffH.initData.size, noffH.initData.inFileAddr);
     }
+
+
+
+    for (int i=3;i<10;i++)    //up to open 10 file for each process
+        fileDescriptor[i] = NULL;
+
+    OpenFile *StdinFile = new OpenFile("stdin");
+    OpenFile *StdoutFile = new OpenFile("stdout");
+    fileDescriptor[0] =  StdinFile;
+    fileDescriptor[1] =  StdoutFile;
+    fileDescriptor[2] =  StdoutFile;
 }
 
 //----------------------------------------------------------------------
@@ -247,3 +259,28 @@ void AddrSpace::RestoreState() {
     machine->pageTable = pageTable;
     machine->pageTableSize = numPages;
 }
+
+
+int AddrSpace::getFileDescriptor(OpenFile * openfile)
+{
+    for (int i=3;i<10;i++)
+    {
+        if (fileDescriptor[i] == NULL)
+        {
+            fileDescriptor[i] = openfile;
+            return i;
+        }  //if
+    }  //for
+    return -1;
+}
+
+OpenFile* AddrSpace::getFileId(int fd)
+{
+    return fileDescriptor[fd];
+}
+
+void AddrSpace::releaseFileDescriptor(int fd)
+{
+    fileDescriptor[fd] = NULL;
+}
+

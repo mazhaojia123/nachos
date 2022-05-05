@@ -70,10 +70,72 @@ private:
 
 #else // FILESYS
 
+#ifdef MYFILESYS
+
 class FileHeader;
 
 class OpenFile {
 public:
+    OpenFile(char *type) {}
+    OpenFile(int sector);        // Open a file whose header is located
+    // at "sector" on the disk
+    ~OpenFile();            // Close the file
+
+    void Seek(int position);        // Set the position from which to
+    // start reading/writing -- UNIX lseek
+
+    int Read(char *into, int numBytes); // Read/write bytes from the file,
+    // starting at the implicit position.
+    // Return the # actually read/written,
+    // and increment position in file.
+    int Write(char *from, int numBytes);
+
+    int ReadAt(char *into, int numBytes, int position);
+
+    // Read/write bytes from the file,
+    // bypassing the implicit position.
+    int WriteAt(char *from, int numBytes, int position);
+
+    int Length();            // Return the number of bytes in the
+    // file (this interface is simpler
+    // than the UNIX idiom -- lseek to
+    // end of file, tell, lseek back
+
+    // lab5: 将内存中的文件头同步到磁盘上
+    void WriteBack();
+
+    // lab78: 增加了标准输入输出的输出形式
+    int WriteStdout(char *from, int numBytes) {
+        int file = 1;  //stdout
+        WriteFile(file, from, numBytes);
+        //retVal = write(fd, buffer, nBytes);
+        return numBytes;
+    }
+
+    int ReadStdin(char *into, int numBytes) {
+        int file = 0;  //stdin
+        return ReadPartial(file, into, numBytes);
+    }
+private:
+    // lab5: OpenFile 实际上操作的是？ SynchDisk
+    //  我们根据 sector 号 来操作文件
+    //  维护 以下三个信息 :
+    //      1. 头文件（大小，扇区数，扇区号...）(读到内存中了)
+    //      2. 头文件所在的扇区号
+    //      3. seekPosition
+    FileHeader *hdr;            // Header for this file
+    int seekPosition;            // Current position within the file
+    int hdrSector;
+};
+
+#else
+
+class FileHeader;
+
+class OpenFile {
+public:
+    OpenFile(char *type) {}
+
     OpenFile(int sector);        // Open a file whose header is located
     // at "sector" on the disk
     ~OpenFile();            // Close the file
@@ -100,12 +162,25 @@ public:
     // than the UNIX idiom -- lseek to
     // end of file, tell, lseek back
 
+    // lab78: 增加了标准输入输出的输出形式
+    int WriteStdout(char *from, int numBytes) {
+        int file = 1;  //stdout
+        WriteFile(file, from, numBytes);
+        //retVal = write(fd, buffer, nBytes);
+        return numBytes;
+    }
+
+    int ReadStdin(char *into, int numBytes) {
+        int file = 0;  //stdin
+        return ReadPartial(file, into, numBytes);
+    }
+
 private:
     FileHeader *hdr;            // Header for this file
     int seekPosition;            // Current position within the file
     int hdrSector;
 };
-
+#endif // MYFILESYS
 #endif // FILESYS
 
 #endif // OPENFILE_H

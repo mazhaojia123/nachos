@@ -187,7 +187,3 @@ Directory::Print() {
     printf("\n");
     delete hdr;
 }
-
-int MultiLevelDir::Directory(int size) {
-    return 0;
-}

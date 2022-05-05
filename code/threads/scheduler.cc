@@ -191,3 +191,47 @@ void Scheduler::deleteTerminatedThread(int spaceId) {
         }
     }
 }
+
+void Scheduler::PrintThreads() {
+    printf("------------ current --------------\n");
+    Thread *t = currentThread;
+    if (t->space != NULL) {
+        printf("spaceID: %d\n", t->space->getSpaceID());
+    } else {
+        printf("spaceID: NULL; 可能是创始线程\n", t->space->getSpaceID());
+    }
+    printf("------------ current --------------\n");
+    printf("------------- ready ---------------\n");
+    int len = readyList->ListLength();
+    for (int i = 1; i <= len; i++) {
+        Thread *t = (Thread*)readyList->getItem(i);
+        if (t->space != NULL) {
+            printf("spaceID: %d\n", t->space->getSpaceID());
+        } else {
+            printf("spaceID: NULL; 可能是创始线程\n", t->space->getSpaceID());
+        }
+    }
+    printf("------------- ready ---------------\n");
+    printf("----------- terminated ------------\n");
+    len = terminatedList->ListLength();
+    for (int i = 1; i <= len; i++) {
+        Thread *t = (Thread*)readyList->getItem(i);
+        if (t->space != NULL) {
+            printf("spaceID: %d\n", t->space->getSpaceID());
+        } else {
+            printf("spaceID: NULL; 可能是创始线程\n", t->space->getSpaceID());
+        }
+    }
+    printf("----------- terminated ------------\n");
+    printf("------------ waiting --------------\n");
+    len = waitingList->ListLength();
+    for (int i = 1; i <= len; i++) {
+        Thread *t = (Thread*)readyList->getItem(i);
+        if (t->space != NULL) {
+            printf("spaceID: %d\n", t->space->getSpaceID());
+        } else {
+            printf("spaceID: NULL; 可能是创始线程\n", t->space->getSpaceID());
+        }
+    }
+    printf("------------ waiting --------------\n");
+}

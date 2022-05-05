@@ -35,6 +35,12 @@ public:
     void RestoreState();        // info on a context switch
     int getSpaceID() { return spaceID; }
 
+    int getFileDescriptor(OpenFile *openfile);
+
+    void releaseFileDescriptor(int fd);
+
+    OpenFile *getFileId(int fd);
+
 private:
     TranslationEntry *pageTable;    // Assume linear page table translation
     // for now!
@@ -42,6 +48,9 @@ private:
     // address space
 
     int spaceID;
+
+    OpenFile *fileDescriptor[10];
+
 };
 
 #endif // ADDRSPACE_H

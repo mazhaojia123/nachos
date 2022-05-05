@@ -14,6 +14,76 @@
 #ifndef FILEHDR_H
 #define FILEHDR_H
 
+#ifdef MYFILESYS
+
+#include "disk.h"
+#include "bitmap.h"
+
+#define NumDirect    ((SectorSize - 2 * sizeof(int)) / sizeof(int))
+#define MaxFileSize    (NumDirect * SectorSize)
+
+// The following class defines the Nachos "file header" (in UNIX terms,
+// the "i-node"), describing where on disk to find all of the data in the file.
+// The file header is organized as a simple table of pointers to
+// data blocks.
+//
+// The file header data structure can be stored in memory or on disk.
+// When it is on disk, it is stored in a single sector -- this means
+// that we assume the size of this data structure to be the same
+// as one disk sector.  Without indirect addressing, this
+// limits the maximum file length to just under 4K bytes.
+//
+// There is no constructor; rather the file header can be initialized
+// by allocating blocks for the file (if it is a new file), or by
+// reading it from disk.
+
+class FileHeader {
+public:
+    FileHeader() {
+        numBytes = 0;
+        numSectors = 0;
+        for (int i = 0; i < NumDirect; i++)
+            dataSectors[i] = 0;
+        // lab5:
+        //  一共128个字节，一个扇区
+        //  8个字节给了 前两项
+        //  120个字节给了后面的列表，共30项
+    }
+
+    bool Allocate(BitMap *bitMap, int fileSize, int incrementBytes);
+
+    bool Allocate(BitMap *bitMap, int fileSize);// Initialize a file header,
+    //  including allocating space
+    //  on disk for the file data
+    void Deallocate(BitMap *bitMap);        // De-allocate this file's
+    //  data blocks
+
+    void FetchFrom(int sectorNumber);    // Initialize file header from disk
+    void WriteBack(int sectorNumber);    // Write modifications to file header
+    //  back to disk
+
+
+    // lab5: 给了在文件中的偏移量，我们根据这个偏移量，计算是第几个逻辑块，然后得到这个逻辑块的 sector 号
+    int ByteToSector(int offset);    // Convert a byte offset into the file
+    // to the disk sector containing
+    // the byte
+
+    int FileLength();            // Return the length of the file
+    // in bytes
+
+    void Print();            // Print the contents of the file.
+
+private:
+    // lab5: 维护了<, , >
+    //  直接操控 ＳynchDisk 提供的接口
+    int numBytes;            // Number of bytes in the file
+    int numSectors;            // Number of data sectors in the file
+    int dataSectors[NumDirect];        // Disk sector numbers for each data
+    // block in the file
+};
+
+#else
+
 #include "disk.h"
 #include "bitmap.h"
 
@@ -63,4 +133,5 @@ private:
     // block in the file
 };
 
+#endif // MYFILESYS
 #endif // FILEHDR_H

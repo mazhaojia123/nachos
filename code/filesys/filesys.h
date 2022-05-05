@@ -37,6 +37,7 @@
 
 #include "copyright.h"
 #include "openfile.h"
+#include "bitmap.h"
 
 #ifdef FILESYS_STUB        // Temporarily implement file system calls as
 
@@ -66,6 +67,51 @@ public:
 };
 
 #else // FILESYS
+#ifdef MYFILESYS
+
+class FileSystem {
+public:
+    FileSystem(bool format);        // Initialize the file system.
+    // Must be called *after* "synchDisk"
+    // has been initialized.
+    // If "format", there is nothing on
+    // the disk, so initialize the directory
+    // and the bitmap of free blocks.
+
+    bool Create(char *name, int initialSize);
+    // Create a file (UNIX creat)
+
+    OpenFile *Open(char *name);    // Open a file (UNIX open)
+
+    bool Remove(char *name);        // Delete a file (UNIX unlink)
+
+    void List();            // List all the files in the file system
+
+    void Print();            // List all the files and their contents
+
+    BitMap* getBitMap();
+
+    void setBitMap(BitMap* freeMap);
+
+    bool Rename(char *source, char *dest);
+
+    void FormatDisk(bool format);
+
+private:
+    // lab5: 所谓的文件系统就是维护两个结构？—— ”目录表文件“ ”位视图文件“
+    //  FileSystem 使用 OpenFile 提供的接口；
+    //  进而能够读写磁盘上的某个 Sector, 通过文件名 -- 目录表 -- 头文件 -- 文件块 进行查找
+    //  FileSystem -- OpenFile -- SynchDisk -- Disk
+    // lab5:
+    //  FileSystem 打开两个文件, 内容还是在磁盘中，而不是内存里
+    OpenFile *freeMapFile;        // Bit map of free disk blocks,
+    // represented as a file
+    OpenFile *directoryFile;        // "Root" directory -- list of
+    // file names, represented as a file
+};
+
+
+#else
 class FileSystem {
   public:
     FileSystem(bool format);		// Initialize the file system.
@@ -92,7 +138,7 @@ class FileSystem {
    OpenFile* directoryFile;		// "Root" directory -- list of
                     // file names, represented as a file
 };
-
+#endif // ifdef MYFILESYS
 #endif // FILESYS
 
 #endif // FS_H

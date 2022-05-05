@@ -8,5 +8,4 @@ int main() {
     SpaceId pid;
     pid = Exec("../test/exit.noff");
     Join(pid);
-    Halt();
 }
