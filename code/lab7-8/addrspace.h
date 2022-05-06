@@ -18,6 +18,9 @@
 
 #define UserStackSize        1024    // increase this as necessary!
 
+#define MAX_USERPOCESSES 256
+extern bool ThreadMap[MAX_USERPOCESSES];
+
 class AddrSpace {
 public:
     AddrSpace(OpenFile *executable);    // Create an address space,
@@ -30,12 +33,24 @@ public:
 
     void SaveState();            // Save/restore address space-specific
     void RestoreState();        // info on a context switch
+    int getSpaceID() { return spaceID; }
+
+    int getFileDescriptor(OpenFile *openfile);
+
+    void releaseFileDescriptor(int fd);
+
+    OpenFile *getFileId(int fd);
 
 private:
     TranslationEntry *pageTable;    // Assume linear page table translation
     // for now!
     unsigned int numPages;        // Number of pages in the virtual
     // address space
+
+    int spaceID;
+
+    OpenFile *fileDescriptor[10];
+
 };
 
 #endif // ADDRSPACE_H

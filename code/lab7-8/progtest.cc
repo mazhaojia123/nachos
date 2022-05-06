@@ -13,6 +13,18 @@
 #include "console.h"
 #include "addrspace.h"
 #include "synch.h"
+#include "progtest.h"
+
+//extern AddrSpace* space;
+
+void StartProcess(int spaceId) {
+    space->InitRegisters();
+    space->RestoreState();
+
+
+    machine->Run();
+    ASSERT(FALSE);
+}
 
 //----------------------------------------------------------------------
 // StartProcess
@@ -29,11 +41,15 @@ StartProcess(char *filename) {
         printf("Unable to open file %s\n", filename);
         return;
     }
+    // lab6: 使用这个可执行文件创建一个新的地址空间，
+    //  立刻删掉这个可执行文件了
     space = new AddrSpace(executable);
     currentThread->space = space;
 
     delete executable;            // close file
 
+    // lab6：设置 machine 的寄存器
+    //  设置 machine 的页表
     space->InitRegisters();        // set the initial register values
     space->RestoreState();        // load page table register
 
