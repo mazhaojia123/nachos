@@ -215,7 +215,7 @@ void Scheduler::PrintThreads() {
     printf("----------- terminated ------------\n");
     len = terminatedList->ListLength();
     for (int i = 1; i <= len; i++) {
-        Thread *t = (Thread*)readyList->getItem(i);
+        Thread *t = (Thread*)terminatedList->getItem(i);
         if (t->space != NULL) {
             printf("spaceID: %d\n", t->space->getSpaceID());
         } else {
