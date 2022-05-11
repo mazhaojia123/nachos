@@ -58,23 +58,19 @@ SwapHeader(NoffHeader *noffH) {
 //	"executable" is the file containing the object code to load into memory
 //----------------------------------------------------------------------
 
-BitMap *bitmap;
-bool ThreadMap[MAX_USERPOCESSES]; // lab78: 这个初始化其实默认了还没有分配
+BitMap *bitmap;                     // lab78: 用来映射物理内存帧
+bool ThreadMap[MAX_USERPOCESSES];   // lab78: 用来维护每个pid的占用情况，true 表示该pid没有占用
 
 AddrSpace::AddrSpace(OpenFile *executable) {
     NoffHeader noffH;
     unsigned int i, size;
 
-    // --------------- !! added by yourself ???? ----------------------
-    // 一次最多允许 MAX_USERPROCESSES user processes execcutables concurrently.
-    // spaceID, i.e. pid
-    // lab78: 也就是说，这里我们首先尝试去分配一个 spaceID
+    // lab78: 1. 分配 pid / spaceID
     bool hasAvailablePid = false;
     for (int i = 100; i < MAX_USERPOCESSES; i++) { // 0~99 是内核
-        // lab78: 这里的 threadMap 是什么东西？
         if (!ThreadMap[i]) {
             ThreadMap[i] = true;
-            spaceID = i;  // lab78: 这个到底是从哪来的？？？
+            spaceID = i;
             hasAvailablePid = true;
             break;
         }
@@ -84,52 +80,30 @@ AddrSpace::AddrSpace(OpenFile *executable) {
         return;
     }
 
-    // lab78: 也就是说第一次到此时才会创建全局的物理页的映射
+    // lab78: 2. 检查位视图是否已经创建
     if (bitmap == NULL)
         bitmap = new BitMap(NumPhysPages);
 
-    // lab6: 首先把 noffH 给读出来
     executable->ReadAt((char *) &noffH, sizeof(noffH), 0);
-    // lab6: 为什么要做 SwapHeader?
     if ((noffH.noffMagic != NOFFMAGIC) &&
         (WordToHost(noffH.noffMagic) == NOFFMAGIC))
         SwapHeader(&noffH);
     ASSERT(noffH.noffMagic == NOFFMAGIC);
 
-// how big is address space?
-    // lab6: 计算整个地址空间的大小 ?
-    //  并且额外计算一部分栈的空间
+    // lab6: 计算整个地址空间的大小 ? 并且额外计算一部分栈的空间
     size = noffH.code.size + noffH.initData.size + noffH.uninitData.size
-           + UserStackSize;    // we need to increase the size
-    // to leave room for the stack
+           + UserStackSize;
 
-    // lab5: 首先计算最多多少页，然后再去，再去针对 size 对页数做一个取整
     numPages = divRoundUp(size, PageSize);
     size = numPages * PageSize;
 
-    ASSERT(numPages <= NumPhysPages);        // check we're not trying
-    // to run anything too big --
-    // at least until we have
-    // virtual memory
+    // lab6: 防止程序太大，内存超出我们的物理内存
+    ASSERT(numPages <= NumPhysPages);
 
     DEBUG('a', "Initializing address space, num pages %d, size %d\n",
           numPages, size);
 
-//// first, set up the translation
-//    // lab6: 创建页表, 并做初始化
-//    //  其实我们发现，载入程序的时候，该文件的 code 和 data 都放入了物理内存
-//    //  而且采取了物理地址 == 虚拟地址的方法
-//    pageTable = new TranslationEntry[numPages];
-//    for (i = 0; i < numPages; i++) {
-//        pageTable[i].virtualPage = i;    // for now, virtual page # = phys page #
-//        pageTable[i].physicalPage = i;
-//        pageTable[i].valid = TRUE;
-//        pageTable[i].use = FALSE;
-//        pageTable[i].dirty = FALSE;
-//        pageTable[i].readOnly = FALSE;  // if the code segment was entirely on
-//        // a separate page, we could set its
-//        // pages to be read-only
-//    }
+    // lab78: 3. 建立页表
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
         pageTable[i].virtualPage = i;    // for now, virtual page # = phys page #
@@ -143,23 +117,18 @@ AddrSpace::AddrSpace(OpenFile *executable) {
         // pages to be read-only
     }
 
-
-// zero out the entire address space, to zero the unitialized data segment
-// and the stack segment
     // lab78: 我们在思考一个问题，下面这句应当注释掉，因为我们使用了位视图
     //  用来分配物理内存的空间，所以没必要先清零内存。
+    //  清零内存应该在机器的初始化时和释放物理内存时来做
 //    bzero(machine->mainMemory, size);
 
-// then, copy in the code and data segments into memory
+    // lab78: 4. 将程序从文件系统读取到物理内存
+    // TODO: 我们默认了程序的每一段可以完全放到我们从位视图找到的第一段空的空间
+    //  但是如果出现了物理内存不连续的情况，可能会出现后放入的内存的程序覆盖了原先的
+    //  的程序。换句话说，我们需要一帧一帧的将程序装入内存，而非一次一段。
     if (noffH.code.size > 0) {
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n",
               noffH.code.virtualAddr, noffH.code.size);
-        // lab6: 如果代码区不为空，那么就读到主存的某个位置去？
-        // lab78：如果这样读进来岂不是有问题？
-        //  我们似乎需要将几个段的开头都读进来
-//        executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),
-//                           noffH.code.size, noffH.code.inFileAddr);
-        // lab78: 我们首先按照一个不太对的方法来实现吧：因为可能潜在的内存不连续
         int code_page = noffH.code.virtualAddr / PageSize;
         int code_offset = noffH.code.virtualAddr % PageSize;
         int code_phy_addr = pageTable[code_page].physicalPage * PageSize + code_offset;
@@ -169,11 +138,6 @@ AddrSpace::AddrSpace(OpenFile *executable) {
     if (noffH.initData.size > 0) {
         DEBUG('a', "Initializing data segment, at 0x%x, size %d\n",
               noffH.initData.virtualAddr, noffH.initData.size);
-        // lab6: 如果代码的数据区不为空，那么就读到主存的某个位置上去
-        //  这里有一个和上面同样的问题 —— 为什么是虚地址, 但是使用的是物理内存?
-//        executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
-//                           noffH.initData.size, noffH.initData.inFileAddr);
-        // lab78: 我们首先按照一个不太对的方法来实现吧：因为可能潜在的内存不连续
         int data_page = noffH.initData.virtualAddr / PageSize;
         int data_offset = noffH.initData.virtualAddr % PageSize;
         int data_phy_addr = pageTable[data_page].physicalPage * PageSize + data_offset;
@@ -181,11 +145,12 @@ AddrSpace::AddrSpace(OpenFile *executable) {
                            noffH.initData.size, noffH.initData.inFileAddr);
     }
 
-
-
+    // lab78: 5. 初始化 file descriptor
     for (int i=3;i<10;i++)    //up to open 10 file for each process
         fileDescriptor[i] = NULL;
 
+    // lab78: 这里的初始化很草率，是因为，它只是希望调用
+    //  linux 的读写标准输入输出，并非需要打开真正的 Nachos 文件
     OpenFile *StdinFile = new OpenFile("stdin");
     OpenFile *StdoutFile = new OpenFile("stdout");
     fileDescriptor[0] =  StdinFile;

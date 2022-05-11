@@ -107,6 +107,8 @@ ExceptionHandler(ExceptionType which) {
                 if (ExitStatus == 99) {
                     List *terminatedList = scheduler->getTerminatedList();
                     scheduler->emptyList(terminatedList);
+                    // lab78: 我感觉这里有 BUG ！！！
+                    // TODO: 没有让终止进程正确退出
                 }
                 printf("Execute system call of Exit(). \n");
                 AdvancePC();
@@ -633,57 +635,39 @@ ExceptionHandler(ExceptionType which) {
                 // loading an executable and execute it
                 //
                 //---------------------------------------------------------
-                // lab78: 不是系统内部命令，而是一个可执行文件
-                //call open() in FILESYS, see filesys.h
+                // lab78: 此时不是系统内部命令，而是一个可执行文件
+                //  1. 打开可执行文件
+                //  2. 将可执行文件从 DISK 装入 内存（也就是虚拟机的内存数组）；
+                //     创建地址空间，建立物理地址和逻辑地址的映射
+                //  3. 创建一个核心线程，然后将该地址空间绑定到核心线程
                 OpenFile *executable = fileSystem->Open(filename);
                 if (executable == NULL) {
-                    //printf("\nUnable to open file %s\n", filename);
                     DEBUG('f', "\nUnable to open file %s\n", filename);
                     machine->WriteRegister(2, -1);
                     AdvancePC();
                     break;
-                    //return;
                 }
 
-                //new address space
                 space = new AddrSpace(executable);
                 delete executable;            // close file
 
                 DEBUG('H', "Execute system call Exec(\"%s\"), it's SpaceId(pid) = %d \n", filename,
                       space->getSpaceID());
-                //new and fork thread
                 char *forkedThreadName = filename;
 
-                //------------------------------------------------
                 char *fname = strrchr(filename, '/');
                 if (fname != NULL)  // there exists "/" in filename
                     forkedThreadName = strtok(fname, "/");
-                //-----------------------------------------------
                 thread = new Thread(forkedThreadName);
-                //printf("exec -- new thread pid =%d\n",space->getSpaceID());
                 thread->Fork(StartProcess, space->getSpaceID());
                 thread->space = space;
                 printf("user process \"%s(%d)\" map to kernel thread \" %s \"\n", filename, space->getSpaceID(),
                        forkedThreadName);
 
-                //return spaceID
-                machine->WriteRegister(2, space->getSpaceID());
-                //printf("Exec()--space->getSpaceID()=%d\n",space->getSpaceID());
-
-                //=========================================================
-                //run the new thread,
-                //otherwise, this process will not execute in order to release its memory,
-                //thread "main" may continue to create new processes,
-                //and will not have enough memory for new processes
+                machine->WriteRegister(2, space->getSpaceID()); // lab78: 返回值
 
                 currentThread->Yield();
 
-                //but introduce another problem:
-                // when Joiner waits for a Joinee, the joinee maybe finish before Joiner call Join(),
-                //  but Joinee go to sleep after calling Finish()
-                //
-                //============================================================
-                //advance PC
                 AdvancePC();
                 break;
             }

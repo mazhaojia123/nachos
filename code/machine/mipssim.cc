@@ -532,7 +532,6 @@ Machine::OneInstruction(Instruction *instr) {
         case OP_SYSCALL:
             // lab78: 我们在这里触发了系统调用
             RaiseException(SyscallException, 0);
-            // lab78: 这里是 return ？？？
             return;
 
         case OP_XOR:

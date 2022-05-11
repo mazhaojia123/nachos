@@ -283,6 +283,11 @@ SWITCH
 **      esi     points to thread function
 **      edi     point to Thread::Finish()
 */
+/*
+ * InterruptEnable
+ * SimpleThread
+ * Thread::Finish
+ */
 _ThreadRoot:
         pushl   %ebp
         movl    %esp,%ebp

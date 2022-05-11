@@ -389,7 +389,7 @@ Thread::StackAllocate(VoidFunctionPtr func, _int arg) {
 #endif  // HOST_SNAKE
 
     machineState[PCState] = (_int) ThreadRoot;
-    machineState[StartupPCState] = (_int) InterruptEnable;  // 为啥返回个指针？
+    machineState[StartupPCState] = (_int) InterruptEnable;
     machineState[InitialPCState] = (_int) func;
     machineState[InitialArgState] = arg;
     machineState[WhenDonePCState] = (_int) ThreadFinish;
@@ -451,6 +451,7 @@ void Thread::Join(int spaceId) {
         if (thread->space->getSpaceID() == spaceId) {
             // joinee 已经完成；也就是说在队列里找到了这个
             // 那么此时是有exitcode的，我们需要设置
+            // todo: 这里难道不应该让这个线程清理掉吗？
             currentThread->waitProcessExitCode = thread->getExitStatus();
             interminatedList = TRUE;
             break;
