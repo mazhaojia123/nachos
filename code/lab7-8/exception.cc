@@ -802,7 +802,7 @@ ExceptionHandler(ExceptionType which) {
                     readnum = openfile->Read(buffer, size);
 
                 for (int i = 0; i < readnum; i++)
-                    machine->WriteMem(base, 1, buffer[i]);
+                    machine->WriteMem(base + i, 1, buffer[i]);
                 buffer[readnum] = '\0';
 
                 for (int i = 0; i < readnum; i++)
